@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ Sơ Của Bạn - CineMatch</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/vietnamese.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header sẽ được import từ file header.html -->
+        <div id="header-container"></div>
+
+
+        <!-- Profile Content -->
+        <section class="profile-container">
+            <div class="profile-header">
+                <h1 class="profile-title">Hồ Sơ Cá Nhân</h1>
+            </div>
+            
+            <div class="profile-content">
+                <!-- Thông tin tài khoản -->
+                <div class="profile-section account-info-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-user-circle"></i> Thông Tin Tài Khoản</h2>
+                    </div>
+                    <div class="profile-avatar">
+                        <div class="avatar-circle">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+                    <div class="profile-info">
+                        <div class="info-item">
+                            <span class="info-label"><i class="fas fa-user"></i> Tên người dùng:</span>
+                            <span class="info-value" id="infoUsername">Đang tải...</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label"><i class="fas fa-envelope"></i> Email:</span>
+                            <span class="info-value" id="infoEmail">Đang tải...</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label"><i class="fas fa-calendar-alt"></i> Thành viên từ:</span>
+                            <span class="info-value" id="infoJoinDate">Đang tải...</span>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button id="editProfileBtn" style="margin-top: 19px;" class="btn btn-primary"><i class="fas fa-edit"></i> Chỉnh Sửa Hồ Sơ</button>
+                    </div>
+                </div>
+                
+                <!-- Sở thích của người dùng -->
+                <div class="profile-section preferences-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-heart"></i> Sở Thích Của Bạn</h2>
+                    </div>
+                    <div class="preferences-slider-container">
+                        <div class="slider-controls">
+                            <button class="slider-btn prev-btn" id="prevPreference"><i class="fas fa-chevron-left"></i></button>
+                            <div class="slider-indicator">
+                                <span id="currentSlide">1</span>/<span id="totalSlides">3</span>
+                            </div>
+                            <button class="slider-btn next-btn" id="nextPreference"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                        <div class="preferences-slider" id="preferencesSlider">
+                            <div class="profile-preferences" id="profilePreferences" style="flex: 1;">
+                                <div class="loading-spinner">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <span>Đang tải sở thích...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <a href="preferences.html" class="btn btn-primary"><i class="fas fa-sync-alt"></i> Cập Nhật Sở Thích</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <style>
+            /* Cải thiện bố cục trang hồ sơ */
+            .profile-container {
+                max-width: 1000px;
+                margin: 2rem auto;
+                padding: 0 1rem;
+            }
+            
+            .profile-header {
+                text-align: center;
+                margin-bottom: 2rem;
+            }
+            
+            .profile-title {
+                font-size: 2.2rem;
+                color: var(--primary-color);
+                margin-bottom: 0.5rem;
+            }
+            
+            .profile-content {
+                display: flex;
+                flex-direction: column;
+                gap: 2rem;
+                align-items: stretch;
+            }
+            
+            .profile-section {
+                background-color: #fff;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                padding: 1.5rem;
+                transition: transform 0.3s ease;
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .profile-section:hover {
+                transform: translateY(-5px);
+            }
+            
+            .section-header {
+                border-bottom: 1px solid #eee;
+                margin-bottom: 1.5rem;
+                padding-bottom: 0.75rem;
+            }
+            
+            .section-header h2 {
+                font-size: 1.5rem;
+                color: var(--primary-color);
+                margin: 0;
+            }
+            
+            .profile-avatar {
+                display: flex;
+                justify-content: center;
+                margin: 1rem 0;
+            }
+            
+            .avatar-circle {
+                width: 100px;
+                height: 100px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+                border: 3px solid white;
+                transition: all 0.3s ease;
+            }
+            
+            .avatar-circle:hover {
+                transform: scale(1.05);
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+            }
+            
+            .avatar-circle i {
+                font-size: 40px;
+                color: white;
+            }
+            
+            .action-buttons {
+                display: flex;
+                justify-content: center;
+                margin-top: auto;
+                padding-top: 1rem;
+            }
+            
+            .btn {
+                padding: 0.75rem 1.5rem;
+                border-radius: 5px;
+                font-weight: 500;
+                transition: all 0.3s ease;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .btn i {
+                font-size: 0.9rem;
+            }
+            
+            .btn-primary {
+                background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+                color: white;
+                border: none;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            }
+            
+            .btn-primary:hover {
+                background-color: var(--primary-dark);
+                transform: translateY(-3px);
+                box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+            }
+            
+            .profile-info {
+                margin-bottom: 1.5rem;
+                flex: 1;
+            }
+            
+            .info-item {
+                display: flex;
+                margin-bottom: 1rem;
+                padding: 0.8rem;
+                border-radius: 8px;
+                background-color: #f9f9f9;
+                transition: all 0.3s ease;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+                align-items: center;
+            }
+            
+            .info-item:hover {
+                background-color: #f0f0f0;
+                transform: translateX(5px);
+            }
+            
+            .info-label {
+                font-weight: 600;
+                min-width: 170px;
+                color: #444;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .info-label i {
+                color: var(--primary-color);
+                font-size: 1.1rem;
+            }
+            
+            .info-value {
+                flex: 1;
+                color: #333;
+                font-weight: 500;
+            }
+            
+
+            
+            /* Responsive design */
+            /* Slider styles */
+            .preferences-slider-container {
+                position: relative;
+                flex: 1;
+                overflow: hidden;
+                margin-bottom: 1rem;
+                display: flex;
+                flex-direction: column;
+                height: 320px;
+            }
+            
+            .slider-controls {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin-bottom: 1rem;
+                gap: 15px;
+                padding: 0.5rem 0;
+                background-color: rgba(255, 255, 255, 0.8);
+                border-radius: 30px;
+                width: fit-content;
+                margin-left: auto;
+                margin-right: auto;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                z-index: 5;
+                position: relative;
+            }
+            
+            .slider-btn {
+                background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+                color: white;
+                border: none;
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            }
+            
+            .slider-btn:hover {
+                transform: scale(1.1);
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+            }
+            
+            .slider-btn:disabled {
+                background: linear-gradient(135deg, #aaa, #888);
+                cursor: not-allowed;
+                opacity: 0.7;
+            }
+            
+            .slider-indicator {
+                font-weight: 600;
+                color: var(--primary-color);
+                font-size: 1.1rem;
+                min-width: 40px;
+                text-align: center;
+            }
+            
+            .preferences-slider {
+                display: flex;
+                transition: transform 0.5s ease;
+                width: 100%;
+                height: 100%;
+                flex: 1;
+                overflow: hidden;
+            }
+            
+            /* Responsive design */
+            @media (min-width: 768px) {
+                .profile-content {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 2rem;
+                    align-items: stretch;
+                }
+                
+                .profile-section {
+                    display: flex;
+                    flex-direction: column;
+                    min-width: 300px;
+                }
+                
+                .account-info-section, .preferences-section {
+                    height: 480px;
+                }
+            }
+        </style>
+
+        <!-- Footer sẽ được import từ file footer.html -->
+        <div id="footer-container"></div>
+    </div>
+
+    <!-- Edit Profile Modal -->
+    <div class="modal" id="editProfileModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Chỉnh Sửa Hồ Sơ</h2>
+            <form id="editProfileForm">
+                <div class="form-group">
+                    <label for="editUsername" class="form-label">Tên người dùng</label>
+                    <input type="text" id="editUsername" name="username" class="form-input" required>
+                    <div class="form-error" id="usernameError"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editEmail" class="form-label">Email</label>
+                    <input type="email" id="editEmail" name="email" class="form-input" required>
+                    <div class="form-error" id="emailError"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editPassword" class="form-label">Mật khẩu mới (để trống nếu không thay đổi)</label>
+                    <input type="password" id="editPassword" name="password" class="form-input">
+                    <div class="form-error" id="passwordError"></div>
+                </div>
+                
+                <div class="form-error" id="editProfileError"></div>
+                
+                <button type="submit" class="form-submit">
+                    <span id="editProfileBtnText">Lưu Thay Đổi</span>
+                    <i id="editProfileSpinner" class="fas fa-spinner fa-spin" style="display: none;"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Auth Check Modal -->
+    <div class="modal" id="authCheckModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Yêu Cầu Đăng Nhập</h2>
+            <p>Bạn cần đăng nhập để xem hồ sơ của mình.</p>
+            <div class="modal-buttons">
+                <a href="login.html" class="btn btn-primary">Đăng Nhập</a>
+                <a href="register.html" class="btn btn-secondary">Đăng Ký</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/includes.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check if user is authenticated
+            if (!authService.isAuthenticated()) {
+                // Show auth modal
+                const authModal = document.getElementById('authCheckModal');
+                authModal.classList.add('active');
+                
+                // Close modal button
+                const closeModal = authModal.querySelector('.close-modal');
+                closeModal.addEventListener('click', () => {
+                    authModal.classList.remove('active');
+                    window.location.href = 'index.html';
+                });
+                
+                return;
+            }
+            
+            // Elements
+            const profileUsername = document.getElementById('profileUsername');
+            const infoUsername = document.getElementById('infoUsername');
+            const infoEmail = document.getElementById('infoEmail');
+            const infoJoinDate = document.getElementById('infoJoinDate');
+            const profilePreferences = document.getElementById('profilePreferences');
+            const watchHistory = document.getElementById('watchHistory');
+            const editProfileBtn = document.getElementById('editProfileBtn');
+            const editProfileModal = document.getElementById('editProfileModal');
+            const editProfileForm = document.getElementById('editProfileForm');
+            const editUsername = document.getElementById('editUsername');
+            const editEmail = document.getElementById('editEmail');
+            const editPassword = document.getElementById('editPassword');
+            const editProfileError = document.getElementById('editProfileError');
+            const editProfileBtnText = document.getElementById('editProfileBtnText');
+            const editProfileSpinner = document.getElementById('editProfileSpinner');
+            
+            // Load user profile
+            await loadUserProfile();
+            
+            // Load user preferences
+            await loadUserPreferences();
+            
+            // Load watch history
+            await loadWatchHistory();
+            
+            // Event listeners
+            editProfileBtn.addEventListener('click', openEditProfileModal);
+            
+            editProfileForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                // Clear previous errors
+                editProfileError.textContent = '';
+                document.getElementById('usernameError').textContent = '';
+                document.getElementById('emailError').textContent = '';
+                document.getElementById('passwordError').textContent = '';
+                
+                // Get form data
+                const username = editUsername.value.trim();
+                const email = editEmail.value.trim();
+                const password = editPassword.value;
+                
+                // Validate form
+                let isValid = true;
+                
+                if (!username) {
+                    document.getElementById('usernameError').textContent = 'Tên người dùng không được để trống';
+                    isValid = false;
+                }
+                
+                if (!email) {
+                    document.getElementById('emailError').textContent = 'Email không được để trống';
+                    isValid = false;
+                } else if (!/\S+@\S+\.\S+/.test(email)) {
+                    document.getElementById('emailError').textContent = 'Email không hợp lệ';
+                    isValid = false;
+                }
+                
+                if (password && password.length < 6) {
+                    document.getElementById('passwordError').textContent = 'Mật khẩu phải có ít nhất 6 ký tự';
+                    isValid = false;
+                }
+                
+                if (!isValid) return;
+                
+                // Show loading state
+                editProfileBtnText.style.display = 'none';
+                editProfileSpinner.style.display = 'inline-block';
+                
+                // Prepare data
+                const profileData = {
+                    username,
+                    email
+                };
+                
+                if (password) {
+                    profileData.password = password;
+                }
+                
+                try {
+                    // Update profile
+                    const response = await authService.updateProfile(profileData);
+                    
+                    // Hide loading state
+                    editProfileBtnText.style.display = 'inline-block';
+                    editProfileSpinner.style.display = 'none';
+                    
+                    if (!response.success) {
+                        throw new Error(response.error);
+                    }
+                    
+                    // Close modal
+                    editProfileModal.classList.remove('active');
+                    
+                    // Reload profile
+                    await loadUserProfile();
+                    
+                    // Show success message
+                    alert('Hồ sơ đã được cập nhật thành công!');
+                } catch (error) {
+                    console.error('Error updating profile:', error);
+                    
+                    // Hide loading state
+                    editProfileBtnText.style.display = 'inline-block';
+                    editProfileSpinner.style.display = 'none';
+                    
+                    // Show error
+                    editProfileError.textContent = error.message || 'Không thể cập nhật hồ sơ';
+                }
+            });
+            
+            // Close modal button
+            const closeModal = editProfileModal.querySelector('.close-modal');
+            closeModal.addEventListener('click', () => {
+                editProfileModal.classList.remove('active');
+            });
+            
+            // Functions
+            async function loadUserProfile() {
+                try {
+                    // Get user data
+                    const userData = authService.userData;
+                    
+                    if (!userData) {
+                        // Fetch profile if not available
+                        const response = await authService.getProfile();
+                        
+                        if (!response.success) {
+                            throw new Error(response.error);
+                        }
+                        
+                        userData = response.data.user;
+                    }
+                    
+                    // Update UI
+                    
+                    infoUsername.textContent = userData.username;
+                    infoEmail.textContent = userData.email;
+                    infoJoinDate.textContent = userData.created_at ? formatDate(userData.created_at) : 'N/A';
+                    
+                    // Pre-fill edit form
+                    editUsername.value = userData.username;
+                    editEmail.value = userData.email;
+                } catch (error) {
+                    console.error('Error loading user profile:', error);
+                    
+                    // Show error message
+                    profileUsername.textContent = 'Error loading profile';
+                    infoUsername.textContent = 'Error';
+                    infoEmail.textContent = 'Error';
+                    infoJoinDate.textContent = 'Error';
+                }
+            }
+            
+            async function loadUserPreferences() {
+                try {
+                    // Get preferences from local storage
+                    const preferencesData = localStorage.getItem(STORAGE_KEYS.PREFERENCES);
+                    
+                    if (!preferencesData) {
+                        // Fetch preferences if not available
+                        const response = await apiRequest(API_CONFIG.ENDPOINTS.USER_PREFERENCES);
+                        
+                        if (!response.success) {
+                            throw new Error(response.error);
+                        }
+                        
+                        // Save preferences to local storage
+                        localStorage.setItem(STORAGE_KEYS.PREFERENCES, JSON.stringify(response.data.preferences));
+                        
+                        preferences = response.data.preferences;
+                    } else {
+                        preferences = JSON.parse(preferencesData);
+                    }
+                    
+                    // Update UI
+                    if (preferences) {
+                        // Tạo các slide cho từng loại sở thích
+                        const slides = [];
+                        
+                        // Slide 1: Thể loại yêu thích
+                        if (preferences.favorite_genres) {
+                            const genresList = preferences.favorite_genres
+                                .split(',')
+                                .map(item => item.trim());
+                                
+                            const genresSlide = createPreferenceSlide('Thể Loại Yêu Thích', genresList, 'film');
+                            slides.push(genresSlide);
+                        }
+                        
+                        // Slide 2: Diễn viên yêu thích
+                        if (preferences.favorite_actors) {
+                            const actorsList = preferences.favorite_actors
+                                .split(',')
+                                .map(item => item.trim());
+                                
+                            const actorsSlide = createPreferenceSlide('Diễn Viên Yêu Thích', actorsList, 'user');
+                            slides.push(actorsSlide);
+                        }
+                        
+                        // Slide 3: Đạo diễn yêu thích
+                        if (preferences.favorite_directors) {
+                            const directorsList = preferences.favorite_directors
+                                .split(',')
+                                .map(item => item.trim());
+                                
+                            const directorsSlide = createPreferenceSlide('Đạo Diễn Yêu Thích', directorsList, 'video');
+                            slides.push(directorsSlide);
+                        }
+                        
+                        // Nếu không có slide nào
+                        if (slides.length === 0) {
+                            profilePreferences.innerHTML = `
+                                <div class="empty-state">
+                                    <p>Bạn chưa thiết lập sở thích nào.</p>
+                                </div>
+                            `;
+                            return;
+                        }
+                        
+                        // Cập nhật tổng số slide
+                        document.getElementById('totalSlides').textContent = slides.length;
+                        
+                        // Hiển thị slide đầu tiên
+                        profilePreferences.innerHTML = slides[0];
+                        
+                        // Thiết lập sự kiện cho nút trượt
+                        const prevBtn = document.getElementById('prevPreference');
+                        const nextBtn = document.getElementById('nextPreference');
+                        const currentSlideEl = document.getElementById('currentSlide');
+                        
+                        let currentSlideIndex = 0;
+                        
+                        // Cập nhật trạng thái nút
+                        updateSliderButtons();
+                        
+                        // Sự kiện nút trước
+                        prevBtn.addEventListener('click', () => {
+                            if (currentSlideIndex > 0) {
+                                currentSlideIndex--;
+                                profilePreferences.innerHTML = slides[currentSlideIndex];
+                                currentSlideEl.textContent = currentSlideIndex + 1;
+                                updateSliderButtons();
+                            }
+                        });
+                        
+                        // Sự kiện nút tiếp theo
+                        nextBtn.addEventListener('click', () => {
+                            if (currentSlideIndex < slides.length - 1) {
+                                currentSlideIndex++;
+                                profilePreferences.innerHTML = slides[currentSlideIndex];
+                                currentSlideEl.textContent = currentSlideIndex + 1;
+                                updateSliderButtons();
+                            }
+                        });
+                        
+                        // Hàm cập nhật trạng thái nút
+                        function updateSliderButtons() {
+                            prevBtn.disabled = currentSlideIndex === 0;
+                            nextBtn.disabled = currentSlideIndex === slides.length - 1;
+                        }
+                        
+                    } else {
+                        profilePreferences.innerHTML = `
+                            <div class="empty-state">
+                                <p>Bạn chưa thiết lập sở thích nào.</p>
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    console.error('Error loading user preferences:', error);
+                    
+                    // Show error message
+                    profilePreferences.innerHTML = `
+                        <div class="error-state">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>Không thể tải sở thích. Vui lòng thử lại.</p>
+                            <button id="retryPreferences" class="btn btn-primary">Thử Lại</button>
+                        </div>
+                    `;
+                    
+                    // Add retry button event listener
+                    document.getElementById('retryPreferences')?.addEventListener('click', loadUserPreferences);
+                }
+            }
+            
+            // Hàm tạo slide cho từng loại sở thích
+            function createPreferenceSlide(title, itemsList, iconType) {
+                const icons = {
+                    'film': 'fa-film',
+                    'user': 'fa-user-alt',
+                    'video': 'fa-video'
+                };
+                
+                const iconClass = icons[iconType] || 'fa-heart';
+                
+                // Xử lý trường hợp có quá nhiều mục
+                const maxVisibleItems = 15; // Số lượng mục tối đa hiển thị
+                let displayedItems = itemsList;
+                let hasMoreItems = false;
+                
+                if (itemsList.length > maxVisibleItems) {
+                    displayedItems = itemsList.slice(0, maxVisibleItems);
+                    hasMoreItems = true;
+                }
+                
+                let slideHTML = `
+                    <div class="preference-slide">
+                        <div class="preference-slide-header">
+                            <i class="fas ${iconClass}"></i>
+                            <h3>${title}</h3>
+                            <span class="item-count">(${itemsList.length} mục)</span>
+                        </div>
+                        <div class="preference-items-container">
+                            <div class="preference-items">
+                `;
+                
+                // Thêm các mục sở thích
+                displayedItems.forEach(item => {
+                    slideHTML += `
+                        <div class="preference-tag">
+                            <span>${item}</span>
+                        </div>
+                    `;
+                });
+                
+                // Hiển thị thông báo nếu có thêm mục
+                if (hasMoreItems) {
+                    const remainingCount = itemsList.length - maxVisibleItems;
+                    slideHTML += `
+                        <div class="preference-tag more-tag">
+                            <span>+${remainingCount} mục khác</span>
+                        </div>
+                    `;
+                }
+                
+                slideHTML += `
+                            </div>
+                        </div>
+                    </div>
+                    <style>
+                        .preference-slide {
+                            padding: 1rem;
+                            height: 100%;
+                            display: flex;
+                            flex-direction: column;
+                        }
+                        
+                        .preference-slide-header {
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                            margin-bottom: 1rem;
+                        }
+                        
+                        .preference-slide-header i {
+                            font-size: 1.5rem;
+                            color: var(--primary-color);
+                        }
+                        
+                        .preference-slide-header h3 {
+                            font-size: 1.3rem;
+                            color: #333;
+                            margin: 0;
+                        }
+                        
+                        .item-count {
+                            color: #666;
+                            font-size: 0.9rem;
+                            font-weight: normal;
+                        }
+                        
+                        .preference-items-container {
+                            flex: 1;
+                            overflow-y: auto;
+                            padding-right: 5px;
+                            margin-bottom: 10px;
+                            max-height: 250px;
+                        }
+                        
+                        .preference-items-container::-webkit-scrollbar {
+                            width: 6px;
+                        }
+                        
+                        .preference-items-container::-webkit-scrollbar-track {
+                            background: #f1f1f1;
+                            border-radius: 10px;
+                        }
+                        
+                        .preference-items-container::-webkit-scrollbar-thumb {
+                            background: var(--primary-color);
+                            border-radius: 10px;
+                        }
+                        
+                        .preference-items {
+                            display: flex;
+                            flex-wrap: wrap;
+                            gap: 10px;
+                            margin-top: 0.5rem;
+                        }
+                        
+                        .preference-tag {
+                            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+                            color: white;
+                            padding: 8px 15px;
+                            border-radius: 20px;
+                            font-size: 0.9rem;
+                            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+                            transition: all 0.3s ease;
+                            cursor: default;
+                        }
+                        
+                        .preference-tag:hover {
+                            transform: translateY(-3px);
+                            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+                        }
+                        
+                        .more-tag {
+                            background: linear-gradient(135deg, #888, #555);
+                        }
+                    </style>
+                `;
+                
+                return slideHTML;
+            }
+            
+            async function loadWatchHistory() {
+                try {
+                    // TODO: Implement watch history API
+                    // For now, show placeholder
+                    if (watchHistory) {
+                        watchHistory.innerHTML = `
+                            <div class="empty-state">
+                                <p>Lịch sử xem phim của bạn sẽ hiển thị tại đây.</p>
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    console.error('Error loading watch history:', error);
+                    
+                    // Show error message
+                    if (watchHistory) {
+                        watchHistory.innerHTML = `
+                            <div class="error-state">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <p>Không thể tải lịch sử xem phim. Vui lòng thử lại.</p>
+                                <button id="retryHistory" class="btn btn-primary">Thử Lại</button>
+                            </div>
+                        `;
+                        
+                        // Add retry button event listener
+                        document.getElementById('retryHistory')?.addEventListener('click', loadWatchHistory);
+                    }
+                }
+            }
+            
+            function openEditProfileModal() {
+                // Show modal
+                editProfileModal.classList.add('active');
+            }
+        });
+    </script>
+</body>
+</html>

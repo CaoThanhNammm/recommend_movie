@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duyệt Phim - CineMatch</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/vietnamese.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header sẽ được import từ file header.html -->
+        <div id="header-container"></div>
+
+        <!-- Movies Header -->
+        <section class="movies-header">
+            <div class="movies-search">
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="Tìm kiếm phim...">
+                    <button id="searchBtn">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div class="filter-container">
+                    <select id="genreFilter" class="filter-select">
+                        <option value="">Tất Cả Thể Loại</option>
+                        <!-- Genres will be loaded here -->
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Movies Content -->
+        <section class="movies-container">
+            <div class="movies-info">
+                <div class="pagination">
+                    <button id="prevPage" class="pagination-btn" disabled>
+                        <i class="fas fa-chevron-left"></i> Trước
+                    </button>
+                    <span id="pageInfo">Trang 1 / 1</span>
+                    <button id="nextPage" class="pagination-btn" disabled>
+                        Sau <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="movie-grid" id="moviesGrid">
+                <!-- Movies will be loaded here -->
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+            </div>
+            
+            <div class="pagination pagination-bottom">
+                <button id="prevPageBottom" class="pagination-btn" disabled>
+                    <i class="fas fa-chevron-left"></i> Trước
+                </button>
+                <span id="pageInfoBottom">Trang 1 / 1</span>
+                <button id="nextPageBottom" class="pagination-btn" disabled>
+                    Sau <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>CineMatch</h2>
+                    <p>Hệ thống đề xuất phim cá nhân của bạn</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-section">
+                        <h3>Điều Hướng</h3>
+                        <ul>
+                            <li><a href="index.html">Trang Chủ</a></li>
+                            <li><a href="movies.html">Phim</a></li>
+                            <li><a href="preferences.html">Sở Thích</a></li>
+                            <li><a href="recommendations.html">Đề Xuất</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-section">
+                        <h3>Tài Khoản</h3>
+                        <ul>
+                            <li><a href="login.html">Đăng Nhập</a></li>
+                            <li><a href="register.html">Đăng Ký</a></li>
+                            <li><a href="profile.html">Hồ Sơ</a></li>
+                            <li><a href="watch-history.html">Lịch Sử Xem</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 CineMatch. Đã đăng ký bản quyền.</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Auth Check Modal -->
+    <div class="modal" id="authCheckModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Yêu Cầu Đăng Nhập</h2>
+            <p>Bạn cần đăng nhập để sử dụng tính năng này.</p>
+            <div class="modal-buttons">
+                <a href="login.html" class="btn btn-primary">Đăng Nhập</a>
+                <a href="register.html" class="btn btn-secondary">Đăng Ký</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/includes.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('Movies page loaded, initializing...');
+            
+            // Elements
+            const moviesGrid = document.getElementById('moviesGrid');
+            
+            const pageInfo = document.getElementById('pageInfo');
+            const pageInfoBottom = document.getElementById('pageInfoBottom');
+            const prevPage = document.getElementById('prevPage');
+            const nextPage = document.getElementById('nextPage');
+            const prevPageBottom = document.getElementById('prevPageBottom');
+            const nextPageBottom = document.getElementById('nextPageBottom');
+            const searchInput = document.getElementById('searchInput');
+            const searchBtn = document.getElementById('searchBtn');
+            const genreFilter = document.getElementById('genreFilter');
+            
+            // State
+            let currentPage = 1;
+            let totalPages = 1;
+            let perPage = 20;
+            let searchQuery = '';
+            let selectedGenre = '';
+            
+            // Check API connection before loading data
+            try {
+                console.log('Checking API connection...');
+                
+                // Try a simple API request to check connection
+             
+                
+                // Load genres for filter
+                await loadGenres();
+                
+                // Load initial movies
+                await loadMovies();
+                
+            } catch (error) {
+                console.error('API connection error:', error);
+                
+                // Show a user-friendly error message
+                moviesGrid.innerHTML = `
+                    <div class="error-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Lỗi Kết Nối</h3>
+                        <p>Không thể kết nối đến máy chủ cơ sở dữ liệu phim.</p>
+                        <p><small>${error.message}</small></p>
+                        <div class="error-details">
+                            <p>Nguyên nhân có thể:</p>
+                            <ul>
+                                <li>Máy chủ API không hoạt động</li>
+                                <li>URL máy chủ API không chính xác (hiện tại là ${API_CONFIG.BASE_URL})</li>
+                                <li>Có thể có vấn đề về kết nối mạng</li>
+                            </ul>
+                        </div>
+                        <button id="retryConnection" class="btn btn-primary">
+                            <i class="fas fa-sync-alt"></i> Thử Lại Kết Nối
+                        </button>
+                    </div>
+                `;
+                
+                // Add retry button event listener
+                document.getElementById('retryConnection')?.addEventListener('click', () => {
+                    window.location.reload();
+                });
+                
+                // Disable pagination and search
+                prevPage.disabled = true;
+                nextPage.disabled = true;
+                prevPageBottom.disabled = true;
+                nextPageBottom.disabled = true;
+                searchBtn.disabled = true;
+                genreFilter.disabled = true;
+            }
+            
+            // Event listeners
+            searchBtn.addEventListener('click', () => {
+                searchQuery = searchInput.value.trim();
+                currentPage = 1;
+                loadMovies();
+            });
+            
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    searchQuery = searchInput.value.trim();
+                    currentPage = 1;
+                    loadMovies();
+                }
+            });
+            
+            genreFilter.addEventListener('change', () => {
+                selectedGenre = genreFilter.value;
+                currentPage = 1;
+                loadMovies();
+            });
+            
+            // Pagination event listeners
+            prevPage.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    loadMovies();
+                    window.scrollTo(0, 0);
+                }
+            });
+            
+            nextPage.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    loadMovies();
+                    window.scrollTo(0, 0);
+                }
+            });
+            
+            prevPageBottom.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    loadMovies();
+                    window.scrollTo(0, 0);
+                }
+            });
+            
+            nextPageBottom.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    loadMovies();
+                    window.scrollTo(0, 0);
+                }
+            });
+            
+            // Functions
+            async function loadGenres() {
+                try {
+                    console.log('Loading genres from API...');
+                    // Clear existing optionsco
+                    
+                    const response = await apiRequest(API_CONFIG.ENDPOINTS.GENRES_LIST);
+                    
+                    if (!response.success) {
+                        throw new Error(response.error || 'Failed to fetch genres data');
+                    }
+                    
+                    const genres = response.data;
+                    console.log('Genres loaded successfully:', genres);
+                    
+                    // Add genres to filter
+                    genres.forEach(genre => {
+                        const option = document.createElement('option');
+                        option.value = genre.name;
+                        option.textContent = genre.name;
+                        genreFilter.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Error loading genres:', error);
+                    
+                    // Add a default "All Genres" option if we couldn't load from API
+                    // This ensures the filter still works even if the API is down
+                    genreFilter.innerHTML = '<option value="">Tất Cả Thể Loại</option>';
+                    
+                    // Add a few common genres as fallback
+                    const fallbackGenres = ['Hành Động', 'Hài Kịch', 'Chính Kịch', 'Kinh Dị', 'Khoa Học Viễn Tưởng'];
+                    fallbackGenres.forEach(genre => {
+                        const option = document.createElement('option');
+                        option.value = genre;
+                        option.textContent = genre;
+                        genreFilter.appendChild(option);
+                    });
+                }
+            }
+            
+            async function loadMovies() {
+                try {
+                    // Show loading state
+                    moviesGrid.innerHTML = '';
+                    for (let i = 0; i < perPage; i++) {
+                        if (i < 12) { // Only show 12 skeletons to avoid too many DOM elements
+                            moviesGrid.innerHTML += '<div class="movie-card skeleton"></div>';
+                        }
+                    }
+                    
+                    // Build query parameters
+                    let queryParams = `?page=${currentPage}&per_page=${perPage}`;
+                    
+                    if (searchQuery) {
+                        queryParams += `&search=${encodeURIComponent(searchQuery)}`;
+                    }
+                    
+                    if (selectedGenre) {
+                        queryParams += `&genre=${encodeURIComponent(selectedGenre)}`;
+                    }
+                    
+                    // Make API request
+                    const response = await apiRequest(API_CONFIG.ENDPOINTS.MOVIES + queryParams);
+                    
+                    // Clear loading state
+                    moviesGrid.innerHTML = '';
+                    
+                    if (!response.success) {
+                        throw new Error(response.error || 'Failed to fetch movies data');
+                    }
+                    
+                    const { movies, total, pages, current_page } = response.data;
+                    
+                    // Update state
+                    currentPage = current_page;
+                    totalPages = pages;
+                    
+                    // Update UI
+                   
+                    pageInfo.textContent = `Trang ${currentPage} / ${totalPages}`;
+                    pageInfoBottom.textContent = `Trang ${currentPage} / ${totalPages}`;
+                    
+                    // Update pagination buttons
+                    prevPage.disabled = currentPage <= 1;
+                    nextPage.disabled = currentPage >= totalPages;
+                    prevPageBottom.disabled = currentPage <= 1;
+                    nextPageBottom.disabled = currentPage >= totalPages;
+                    
+                    // Display movies
+                    if (movies && movies.length > 0) {
+                        movies.forEach(movie => {
+                            moviesGrid.innerHTML += createMovieCard(movie);
+                        });
+                        
+                        // Add event listeners to movie cards
+                        addMovieCardEventListeners();
+                    } else {
+                        // Show empty state
+                        moviesGrid.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-film"></i>
+                                <p>No movies found. Try a different search or filter.</p>
+                                <button id="clearFilters" class="btn btn-primary">Clear Filters</button>
+                            </div>
+                        `;
+                        
+                        // Add clear filters button event listener
+                        document.getElementById('clearFilters')?.addEventListener('click', () => {
+                            searchInput.value = '';
+                            searchQuery = '';
+                            genreFilter.value = '';
+                            selectedGenre = '';
+                            currentPage = 1;
+                            loadMovies();
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error loading movies:', error);
+                    
+                    // Show more detailed error state
+                    moviesGrid.innerHTML = `
+                        <div class="error-state">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>Failed to load movies. The API server might not be running.</p>
+                            <p><small>Error: ${error.message || 'Network error'}</small></p>
+                            <p>Please make sure the API server is running at ${API_CONFIG.BASE_URL}</p>
+                            <button id="retryMovies" class="btn btn-primary">Retry</button>
+                        </div>
+                    `;
+                    
+                    // Add retry button event listener
+                    document.getElementById('retryMovies')?.addEventListener('click', loadMovies);
+                }
+            }
+            
+            // Add event listeners to movie cards
+            function addMovieCardEventListeners() {
+                // Watch later buttons
+                const watchLaterButtons = document.querySelectorAll('.watch-later');
+                watchLaterButtons.forEach(button => {
+                    button.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        
+                        // Check if user is authenticated
+                        if (!authService.isAuthenticated()) {
+                            // Show auth modal
+                            const authModal = document.getElementById('authCheckModal');
+                            authModal.classList.add('active');
+                            
+                            // Close modal button
+                            const closeModal = authModal.querySelector('.close-modal');
+                            closeModal.addEventListener('click', () => {
+                                authModal.classList.remove('active');
+                            });
+                            
+                            return;
+                        }
+                        
+                        // Get movie ID
+                        const movieCard = button.closest('.movie-card');
+                        const movieId = movieCard.dataset.id;
+                        
+                        // Toggle bookmark icon
+                        const icon = button.querySelector('i');
+                        icon.classList.toggle('far');
+                        icon.classList.toggle('fas');
+                        
+                        // TODO: Implement watch later functionality
+                        console.log('Add to watch later:', movieId);
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>

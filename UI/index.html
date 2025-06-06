@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineMatch - Hệ Thống Đề Xuất Phim</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/vietnamese.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header sẽ được import từ file header.html -->
+        <div id="header-container"></div>
+
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Khám Phá Những Bộ Phim Bạn Sẽ Yêu Thích</h1>
+                <p>Nhận đề xuất phim được cá nhân hóa dựa trên sở thích và lịch sử xem của bạn.</p>
+                <div class="hero-buttons">
+                    <a href="preferences.html" class="btn btn-primary">Thiết Lập Sở Thích</a>
+                    <a href="movies.html" class="btn btn-secondary">Duyệt Phim</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Featured Recommendations -->
+        <section class="featured-recommendations">
+            <div class="section-header">
+                <h2>Đề Xuất Cho Bạn</h2>
+                <p>Dựa trên sở thích và lịch sử xem của bạn</p>
+            </div>
+            <div class="movie-grid" id="recommendedMovies">
+                <!-- Movies will be loaded here via JavaScript -->
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+            </div>
+            <div class="section-footer">
+                <a href="recommendations.html" class="btn btn-outline">Xem Tất Cả Đề Xuất</a>
+            </div>
+        </section>
+
+        <!-- Top Rated Movies -->
+        <section class="top-rated">
+            <div class="section-header">
+                <h2>Phim Đánh Giá Cao</h2>
+                <p>Những bộ phim được đánh giá cao nhất bởi cộng đồng</p>
+            </div>
+            <div class="movie-grid" id="topRatedMovies">
+                <!-- Movies will be loaded here via JavaScript -->
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+            </div>
+            <div class="section-footer">
+                <a href="movies.html?sort=top-rated" class="btn btn-outline">Xem Thêm</a>
+            </div>
+        </section>
+
+        <!-- Footer sẽ được import từ file footer.html -->
+        <div id="footer-container"></div>
+    </div>
+
+    <!-- Auth Check Modal -->
+    <div class="modal" id="authCheckModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Yêu Cầu Đăng Nhập</h2>
+            <p>Bạn cần đăng nhập để sử dụng tính năng này.</p>
+            <div class="modal-buttons">
+                <a href="login.html" class="btn btn-primary">Đăng Nhập</a>
+                <a href="register.html" class="btn btn-secondary">Đăng Ký</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/home.js"></script>
+    <script src="js/includes.js"></script>
+</body>
+</html>

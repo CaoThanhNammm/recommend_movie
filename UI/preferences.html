@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thiết Lập Sở Thích - CineMatch</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/vietnamese.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header sẽ được import từ file header.html -->
+        <div id="header-container"></div>
+
+        <!-- Preferences Header -->
+        <section class="preferences-header">
+            <div class="section-header">
+                <h1>Thiết Lập Sở Thích Của Bạn</h1>
+                <p>Cho chúng tôi biết những gì bạn thích để nhận đề xuất phim được cá nhân hóa</p>
+            </div>
+        </section>
+
+        <!-- Preferences Form -->
+        <section class="preferences-container">
+            <div class="preferences-section">
+                <h3>Thể Loại Yêu Thích</h3>
+                <p>Chọn thể loại phim bạn thích xem</p>
+                
+                <div class="tag-container" id="genresContainer">
+                    <!-- Genres will be loaded here -->
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Đang tải thể loại...</span>
+                    </div>
+                </div>
+                <div class="refresh-action">
+                    <button id="refreshGenresBtn" class="btn btn-refresh">
+                        <i class="fas fa-sync-alt"></i> Hiển Thị Thêm Thể Loại
+                    </button>
+                </div>
+                
+                <div class="selected-tags" id="selectedGenres"></div>
+            </div>
+            
+            <div class="preferences-section">
+                <h3>Diễn Viên Yêu Thích</h3>
+                <p>Chọn diễn viên bạn thích xem</p>
+                
+                <div class="tag-container" id="actorsContainer">
+                    <!-- Actors will be loaded here -->
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Đang tải diễn viên...</span>
+                    </div>
+                </div>
+                <div class="refresh-action">
+                    <button id="refreshActorsBtn" class="btn btn-refresh">
+                        <i class="fas fa-sync-alt"></i> Hiển Thị Thêm Diễn Viên
+                    </button>
+                </div>
+                
+                <div class="selected-tags" id="selectedActors"></div>
+            </div>
+            
+            <div class="preferences-section">
+                <h3>Đạo Diễn Yêu Thích</h3>
+                <p>Chọn đạo diễn bạn thích xem</p>
+                
+                <div class="tag-container" id="directorsContainer">
+                    <!-- Directors will be loaded here -->
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Đang tải đạo diễn...</span>
+                    </div>
+                </div>
+                <div class="refresh-action">
+                    <button id="refreshDirectorsBtn" class="btn btn-refresh">
+                        <i class="fas fa-sync-alt"></i> Hiển Thị Thêm Đạo Diễn
+                    </button>
+                </div>
+                
+                <div class="selected-tags" id="selectedDirectors"></div>
+            </div>
+            
+            <div class="preferences-actions">
+                <button id="skipBtn" class="btn btn-secondary">Bỏ Qua</button>
+                <button id="saveBtn" class="btn btn-primary">
+                    <span id="saveBtnText">Lưu Sở Thích</span>
+                    <i id="saveSpinner" class="fas fa-spinner fa-spin" style="display: none;"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- Footer sẽ được import từ file footer.html -->
+        <div id="footer-container"></div>
+    </div>
+
+    <!-- Auth Check Modal -->
+    <div class="modal" id="authCheckModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Yêu Cầu Đăng Nhập</h2>
+            <p>Bạn cần đăng nhập để thiết lập sở thích.</p>
+            <div class="modal-buttons">
+                <a href="login.html" class="btn btn-primary">Đăng Nhập</a>
+                <a href="register.html" class="btn btn-secondary">Đăng Ký</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/includes.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('DOM content loaded, initializing preferences page...');
+            
+            // Check if user is authenticated
+            const isAuthenticated = authService.isAuthenticated();
+            console.log('User authenticated:', isAuthenticated);
+            
+            // Elements
+            const genresContainer = document.getElementById('genresContainer');
+            const actorsContainer = document.getElementById('actorsContainer');
+            const directorsContainer = document.getElementById('directorsContainer');
+            const selectedActors = document.getElementById('selectedActors');
+            const selectedDirectors = document.getElementById('selectedDirectors');
+            const refreshGenresBtn = document.getElementById('refreshGenresBtn');
+            const refreshActorsBtn = document.getElementById('refreshActorsBtn');
+            const refreshDirectorsBtn = document.getElementById('refreshDirectorsBtn');
+            const skipBtn = document.getElementById('skipBtn');
+            const saveBtn = document.getElementById('saveBtn');
+            const saveBtnText = document.getElementById('saveBtnText');
+            const saveSpinner = document.getElementById('saveSpinner');
+            
+            // State
+            let allGenres = [];
+            let allActors = [];
+            let allDirectors = [];
+            let selectedGenres = [];
+            let selectedActorsList = [];
+            let selectedDirectorsList = [];
+            
+            // Constants
+            const ITEMS_PER_PAGE = 10;
+            
+            // Load existing preferences if available
+            let existingPreferences = null;
+            
+            async function loadUserPreferences() {
+                if (isAuthenticated) {
+                    try {
+                        // First try to get preferences from the server
+                        console.log('Checking for user preferences on the server...');
+                        const response = await apiRequest(API_CONFIG.ENDPOINTS.CHECK_PREFERENCES, {
+                            method: 'GET'
+                        });
+                        
+                        if (response.success && response.data.exists) {
+                            existingPreferences = response.data.preferences;
+                            console.log('Loaded existing preferences from server:', existingPreferences);
+                            
+                            // Save to local storage for future use
+                            localStorage.setItem(STORAGE_KEYS.PREFERENCES, JSON.stringify(existingPreferences));
+                            
+                            // Pre-select genres
+                            if (existingPreferences.favorite_genres) {
+                                selectedGenres = existingPreferences.favorite_genres.split(',').map(g => g.trim());
+                                console.log('Pre-selected genres:', selectedGenres);
+                                updateSelectedGenres();
+                            }
+                            
+                            // Pre-select actors
+                            if (existingPreferences.favorite_actors) {
+                                selectedActorsList = existingPreferences.favorite_actors.split(',').map(a => a.trim());
+                                console.log('Pre-selected actors:', selectedActorsList);
+                                updateSelectedActors();
+                            }
+                            
+                            // Pre-select directors
+                            if (existingPreferences.favorite_directors) {
+                                selectedDirectorsList = existingPreferences.favorite_directors.split(',').map(d => d.trim());
+                                console.log('Pre-selected directors:', selectedDirectorsList);
+                                updateSelectedDirectors();
+                            }
+                            return;
+                        } else {
+                            console.log('No preferences found on server or error occurred');
+                        }
+                    } catch (error) {
+                        console.error('Error checking preferences on server:', error);
+                    }
+                    
+                    // Fallback to local storage if server check fails
+                    const preferencesData = localStorage.getItem(STORAGE_KEYS.PREFERENCES);
+                    if (preferencesData) {
+                        try {
+                            existingPreferences = JSON.parse(preferencesData);
+                            console.log('Loaded existing preferences from localStorage:', existingPreferences);
+                            
+                            // Pre-select genres
+                            if (existingPreferences.favorite_genres) {
+                                selectedGenres = existingPreferences.favorite_genres.split(',').map(g => g.trim());
+                                console.log('Pre-selected genres:', selectedGenres);
+                                updateSelectedGenres();
+                            }
+                            
+                            // Pre-select actors
+                            if (existingPreferences.favorite_actors) {
+                                selectedActorsList = existingPreferences.favorite_actors.split(',').map(a => a.trim());
+                                console.log('Pre-selected actors:', selectedActorsList);
+                                updateSelectedActors();
+                            }
+                            
+                            // Pre-select directors
+                            if (existingPreferences.favorite_directors) {
+                                selectedDirectorsList = existingPreferences.favorite_directors.split(',').map(d => d.trim());
+                                console.log('Pre-selected directors:', selectedDirectorsList);
+                                updateSelectedDirectors();
+                            }
+                        } catch (error) {
+                            console.error('Error parsing preferences from localStorage:', error);
+                        }
+                    }
+                }
+            }
+            
+            // Check API connection before loading data
+            try {
+                console.log('Checking API connection...');
+                
+                // Try a direct fetch first to check for CORS issues
+                try {
+                    console.log('Testing direct fetch to API...');
+                    const directResponse = await fetch(`${API_CONFIG.BASE_URL}/genres/`);
+                    const directData = await directResponse.json();
+                    console.log('Direct fetch successful:', directData);
+                    
+                    if (directResponse.status === 200) {
+                        console.log('API connection successful, loading data...');
+                        // Load initial data
+                        await Promise.all([
+                            loadAllGenres(),
+                            loadAllActors(),
+                            loadAllDirectors(),
+                            loadUserPreferences() // Load user preferences
+                        ]);
+                    } else {
+                        throw new Error('API connection test failed');
+                    }
+                } catch (directError) {
+                    console.error('Direct fetch failed (possible CORS issue):', directError);
+                }
+                
+                // Now try with our apiRequest utility
+                const apiResponse = await apiRequest(API_CONFIG.ENDPOINTS.GENRES_LIST);
+                if (apiResponse.success) {
+                    console.log('API connection successful using apiRequest, loading data...');
+                    // Load initial data if not already loaded
+                    if (allGenres.length === 0 || allActors.length === 0 || allDirectors.length === 0) {
+                        await Promise.all([
+                            loadAllGenres(),
+                            loadAllActors(),
+                            loadAllDirectors(),
+                            loadUserPreferences() // Load user preferences
+                        ]);
+                    }
+                } else {
+                    throw new Error(`API connection test failed: ${apiResponse.error}`);
+                }
+            } catch (error) {
+                console.error('API connection error:', error);
+                const errorMessage = `
+                    <div class="error-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối của bạn và thử lại.</p>
+                        <p><small>${error.message}</small></p>
+                        <button id="retryConnection" class="btn btn-primary">Thử Kết Nối Lại</button>
+                    </div>
+                `;
+                
+                genresContainer.innerHTML = errorMessage;
+                actorsContainer.innerHTML = errorMessage;
+                directorsContainer.innerHTML = errorMessage;
+                
+                document.querySelectorAll('#retryConnection').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        window.location.reload();
+                    });
+                });
+            }
+            
+            // Event listeners
+            refreshGenresBtn.addEventListener('click', () => showRandomGenres());
+            refreshActorsBtn.addEventListener('click', () => showRandomActors());
+            refreshDirectorsBtn.addEventListener('click', () => showRandomDirectors());
+            
+            skipBtn.addEventListener('click', () => {
+                window.location.href = 'index.html';
+            });
+            
+            saveBtn.addEventListener('click', savePreferences);
+            
+            // Functions
+            async function loadAllGenres() {
+                try {
+                    console.log('Loading genres...');
+                    genresContainer.innerHTML = `
+                        <div class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Loading genres...</span>
+                        </div>
+                    `;
+                    
+                    // Make sure we're using the correct endpoint
+                    const genresEndpoint = API_CONFIG.ENDPOINTS.GENRES_LIST;
+                    console.log('Genres endpoint:', genresEndpoint);
+                    
+                    // Try direct fetch first
+                    try {
+                        const directUrl = `${API_CONFIG.BASE_URL}${genresEndpoint}/`;
+                        console.log('Trying direct fetch to:', directUrl);
+                        
+                        const directResponse = await fetch(directUrl);
+                        if (!directResponse.ok) {
+                            throw new Error(`HTTP error! status: ${directResponse.status}`);
+                        }
+                        
+                        const data = await directResponse.json();
+                        console.log('Direct fetch genres response:', data);
+                        
+                        // Process the data
+                        allGenres = data;
+                        console.log('Loaded genres:', allGenres);
+                        
+                        if (allGenres.length === 0) {
+                            genresContainer.innerHTML = `
+                                <div class="no-items">No genres available in the database</div>
+                            `;
+                            return;
+                        }
+                        
+                        // Show initial random genres
+                        showRandomGenres();
+                        
+                        // Update selected genres display
+                        updateSelectedGenres();
+                        return;
+                    } catch (directError) {
+                        console.error('Direct fetch failed, falling back to apiRequest:', directError);
+                    }
+                    
+                    // Fall back to apiRequest
+                    const response = await apiRequest(genresEndpoint);
+                    console.log('Genres API response:', response);
+                    
+                    if (!response.success) {
+                        throw new Error(response.error || 'Failed to load genres');
+                    }
+                    
+                    // API returns array directly for genres
+                    if (!response.data || !Array.isArray(response.data)) {
+                        console.error('Invalid genres data format:', response.data);
+                        throw new Error('Invalid data format received from server');
+                    }
+                    
+                    allGenres = response.data;
+                    console.log('Loaded genres:', allGenres);
+                    
+                    if (allGenres.length === 0) {
+                        genresContainer.innerHTML = `
+                            <div class="no-items">No genres available in the database</div>
+                        `;
+                        return;
+                    }
+                    
+                    // Show initial random genres
+                    showRandomGenres();
+                    
+                    // Update selected genres display
+                    updateSelectedGenres();
+                    
+                    // Update selected genres display
+                    updateSelectedGenres();
+                } catch (error) {
+                    console.error('Error loading genres:', error);
+                    genresContainer.innerHTML = `
+                        <div class="error-state">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>Failed to load genres: ${error.message}</p>
+                            <button id="retryGenres" class="btn btn-primary">Retry</button>
+                        </div>
+                    `;
+                    
+                    document.getElementById('retryGenres')?.addEventListener('click', loadAllGenres);
+                }
+            }
+            
+            async function loadAllActors() {
+                try {
+                    console.log('Loading actors...');
+                    actorsContainer.innerHTML = `
+                        <div class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Loading actors...</span>
+                        </div>
+                    `;
+                    
+                    // Make sure we're using the correct endpoint
+                    const actorsEndpoint = `${API_CONFIG.ENDPOINTS.CAST}?per_page=100`;
+                    console.log('Actors endpoint:', actorsEndpoint);
+                    
+                    // Try direct fetch first
+                    try {
+                        const directUrl = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CAST}/?per_page=100`;
+                        console.log('Trying direct fetch to:', directUrl);
+                        
+                        const directResponse = await fetch(directUrl);
+                        if (!directResponse.ok) {
+                            throw new Error(`HTTP error! status: ${directResponse.status}`);
+                        }
+                        
+                        const data = await directResponse.json();
+                        console.log('Direct fetch actors response:', data);
+                        
+                        // Process the data
+                        if (data && data.cast) {
+                            allActors = data.cast;
+                            console.log('Loaded actors:', allActors);
+                            
+                            if (allActors.length === 0) {
+                                actorsContainer.innerHTML = `
+                                    <div class="no-items">No actors available in the database</div>
+                                `;
+                                return;
+                            }
+                            
+                            // Show initial random actors
+                            showRandomActors();
+                            return;
+                        } else {
+                            throw new Error('Invalid data format received from server');
+                        }
+                    } catch (directError) {
+                        console.error('Direct fetch failed, falling back to apiRequest:', directError);
+                    }
+                    
+                    // Fall back to apiRequest
+                    const response = await apiRequest(actorsEndpoint);
+                    console.log('Actors API response:', response);
+                    
+                    if (!response.success) {
+                        throw new Error(response.error || 'Failed to load actors');
+                    }
+                    
+                    // API returns object with cast property
+                    if (response.data && response.data.cast) {
+                        allActors = response.data.cast;
+                        console.log('Loaded actors:', allActors);
+                        
+                        if (allActors.length === 0) {
+                            actorsContainer.innerHTML = `
+                                <div class="no-items">No actors available in the database</div>
+                            `;
+                            return;
+                        }
+                        
+                        // Show initial random actors
+                        showRandomActors();
+                    } else {
+                        console.error('Invalid actors data format:', response.data);
+                        throw new Error('Invalid data format received from server');
+                    }
+                } catch (error) {
+                    console.error('Error loading actors:', error);
+                    actorsContainer.innerHTML = `
+                        <div class="error-state">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>Failed to load actors: ${error.message}</p>
+                            <button id="retryActors" class="btn btn-primary">Retry</button>
+                        </div>
+                    `;
+                    
+                    document.getElementById('retryActors')?.addEventListener('click', loadAllActors);
+                }
+            }
+            
+            async function loadAllDirectors() {
+                try {
+                    console.log('Loading directors...');
+                    directorsContainer.innerHTML = `
+                        <div class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Loading directors...</span>
+                        </div>
+                    `;
+                    
+                    // Make sure we're using the correct endpoint
+                    const directorsEndpoint = `${API_CONFIG.ENDPOINTS.CREW}?per_page=100&department=Directing`;
+                    console.log('Directors endpoint:', directorsEndpoint);
+                    
+                    // Try direct fetch first
+                    try {
+                        const directUrl = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CREW}/?per_page=100&department=Directing`;
+                        console.log('Trying direct fetch to:', directUrl);
+                        
+                        const directResponse = await fetch(directUrl);
+                        if (!directResponse.ok) {
+                            throw new Error(`HTTP error! status: ${directResponse.status}`);
+                        }
+                        
+                        const data = await directResponse.json();
+                        console.log('Direct fetch directors response:', data);
+                        
+                        // Process the data
+                        if (data && data.crew) {
+                            allDirectors = data.crew;
+                            console.log('Loaded directors:', allDirectors);
+                            
+                            if (allDirectors.length === 0) {
+                                directorsContainer.innerHTML = `
+                                    <div class="no-items">No directors available in the database</div>
+                                `;
+                                return;
+                            }
+                            
+                            // Show initial random directors
+                            showRandomDirectors();
+                            return;
+                        } else {
+                            throw new Error('Invalid data format received from server');
+                        }
+                    } catch (directError) {
+                        console.error('Direct fetch failed, falling back to apiRequest:', directError);
+                    }
+                    
+                    // Fall back to apiRequest
+                    const response = await apiRequest(directorsEndpoint);
+                    console.log('Directors API response:', response);
+                    
+                    if (!response.success) {
+                        throw new Error(response.error || 'Failed to load directors');
+                    }
+                    
+                    // API returns object with crew property
+                    if (response.data && response.data.crew) {
+                        allDirectors = response.data.crew;
+                        console.log('Loaded directors:', allDirectors);
+                        
+                        if (allDirectors.length === 0) {
+                            directorsContainer.innerHTML = `
+                                <div class="no-items">No directors available in the database</div>
+                            `;
+                            return;
+                        }
+                        
+                        // Show initial random directors
+                        showRandomDirectors();
+                    } else {
+                        console.error('Invalid directors data format:', response.data);
+                        throw new Error('Invalid data format received from server');
+                    }
+                } catch (error) {
+                    console.error('Error loading directors:', error);
+                    directorsContainer.innerHTML = `
+                        <div class="error-state">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>Failed to load directors: ${error.message}</p>
+                            <button id="retryDirectors" class="btn btn-primary">Retry</button>
+                        </div>
+                    `;
+                    
+                    document.getElementById('retryDirectors')?.addEventListener('click', loadAllDirectors);
+                }
+            }
+            
+            function showRandomGenres() {
+                console.log('Showing random genres...');
+                // Clear container
+                genresContainer.innerHTML = '';
+                
+                if (!allGenres || allGenres.length === 0) {
+                    genresContainer.innerHTML = '<div class="no-items">No genres available</div>';
+                    return;
+                }
+                
+                // Get random genres that are not already selected
+                const availableGenres = allGenres.filter(genre => !selectedGenres.includes(genre.name));
+                console.log('Available genres:', availableGenres.length);
+                const randomGenres = getRandomItems(availableGenres, ITEMS_PER_PAGE);
+                console.log('Random genres to display:', randomGenres.length);
+                
+                // Add selected genres first
+                selectedGenres.forEach(genreName => {
+                    const genre = allGenres.find(g => g.name === genreName);
+                    if (genre) {
+                        addGenreTag(genre, true);
+                    }
+                });
+                
+                // Add random genres
+                randomGenres.forEach(genre => {
+                    addGenreTag(genre, false);
+                });
+                
+                // If no genres available, show message
+                if (genresContainer.children.length === 0) {
+                    genresContainer.innerHTML = '<div class="no-items">No more genres available</div>';
+                }
+                
+                // Log the current state of the container
+                console.log('Genres container children count:', genresContainer.children.length);
+            }
+            
+            function showRandomActors() {
+                console.log('Showing random actors...');
+                // Clear container
+                actorsContainer.innerHTML = '';
+                
+                if (!allActors || allActors.length === 0) {
+                    actorsContainer.innerHTML = '<div class="no-items">No actors available</div>';
+                    return;
+                }
+                
+                // Get random actors that are not already selected
+                const availableActors = allActors.filter(actor => !selectedActorsList.includes(actor.name));
+                console.log('Available actors:', availableActors.length);
+                const randomActors = getRandomItems(availableActors, ITEMS_PER_PAGE);
+                console.log('Random actors to display:', randomActors.length);
+                
+                // Add selected actors first
+                selectedActorsList.forEach(actorName => {
+                    const actor = allActors.find(a => a.name === actorName);
+                    if (actor) {
+                        addActorTag(actor, true);
+                    }
+                });
+                
+                // Add random actors
+                randomActors.forEach(actor => {
+                    addActorTag(actor, false);
+                });
+                
+                // If no actors available, show message
+                if (actorsContainer.children.length === 0) {
+                    actorsContainer.innerHTML = '<div class="no-items">No more actors available</div>';
+                }
+            }
+            
+            function showRandomDirectors() {
+                console.log('Showing random directors...');
+                // Clear container
+                directorsContainer.innerHTML = '';
+                
+                if (!allDirectors || allDirectors.length === 0) {
+                    directorsContainer.innerHTML = '<div class="no-items">No directors available</div>';
+                    return;
+                }
+                
+                // Get random directors that are not already selected
+                const availableDirectors = allDirectors.filter(director => !selectedDirectorsList.includes(director.name));
+                console.log('Available directors:', availableDirectors.length);
+                const randomDirectors = getRandomItems(availableDirectors, ITEMS_PER_PAGE);
+                console.log('Random directors to display:', randomDirectors.length);
+                
+                // Add selected directors first
+                selectedDirectorsList.forEach(directorName => {
+                    const director = allDirectors.find(d => d.name === directorName);
+                    if (director) {
+                        addDirectorTag(director, true);
+                    }
+                });
+                
+                // Add random directors
+                randomDirectors.forEach(director => {
+                    addDirectorTag(director, false);
+                });
+                
+                // If no directors available, show message
+                if (directorsContainer.children.length === 0) {
+                    directorsContainer.innerHTML = '<div class="no-items">No more directors available</div>';
+                }
+            }
+            
+            function addGenreTag(genre, isSelected) {
+                console.log('Adding genre tag:', genre.name, isSelected);
+                const genreTag = document.createElement('div');
+                genreTag.className = `tag ${isSelected ? 'selected' : ''}`;
+                genreTag.dataset.name = genre.name;
+                genreTag.innerHTML = `
+                    <span>${genre.name}</span>
+                `;
+                
+                genreTag.addEventListener('click', () => {
+                    genreTag.classList.toggle('selected');
+                    
+                    if (genreTag.classList.contains('selected')) {
+                        selectedGenres.push(genre.name);
+                        console.log('Selected genre:', genre.name);
+                    } else {
+                        selectedGenres = selectedGenres.filter(g => g !== genre.name);
+                        console.log('Unselected genre:', genre.name);
+                    }
+                    
+                    // Update the selected genres display
+                    updateSelectedGenres();
+                    
+                    // Refresh the list when a genre is selected
+                    if (genreTag.classList.contains('selected')) {
+                        showRandomGenres();
+                    }
+                });
+                
+                genresContainer.appendChild(genreTag);
+            }
+            
+            function updateSelectedGenres() {
+                const selectedGenresContainer = document.getElementById('selectedGenres');
+                selectedGenresContainer.innerHTML = '';
+                
+                selectedGenres.forEach(genre => {
+                    const tag = document.createElement('div');
+                    tag.className = 'selected-tag';
+                    tag.innerHTML = `
+                        <span>${genre}</span>
+                        <button type="button" aria-label="Remove ${genre}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    
+                    tag.querySelector('button').addEventListener('click', () => {
+                        selectedGenres = selectedGenres.filter(g => g !== genre);
+                        updateSelectedGenres();
+                        // Refresh the list when a genre is removed
+                        showRandomGenres();
+                    });
+                    
+                    selectedGenresContainer.appendChild(tag);
+                });
+            }
+            
+            function addActorTag(actor, isSelected) {
+                console.log('Adding actor tag:', actor.name, isSelected);
+                const actorTag = document.createElement('div');
+                actorTag.className = `tag ${isSelected ? 'selected' : ''}`;
+                actorTag.dataset.name = actor.name;
+                actorTag.innerHTML = `
+                    <span>${actor.name}</span>
+                `;
+                
+                actorTag.addEventListener('click', () => {
+                    actorTag.classList.toggle('selected');
+                    
+                    if (actorTag.classList.contains('selected')) {
+                        // Only add if not already selected
+                        if (!selectedActorsList.includes(actor.name)) {
+                            selectedActorsList.push(actor.name);
+                            console.log('Selected actor:', actor.name);
+                        }
+                    } else {
+                        selectedActorsList = selectedActorsList.filter(a => a !== actor.name);
+                        console.log('Unselected actor:', actor.name);
+                    }
+                    
+                    updateSelectedActors();
+                    
+                    // Refresh the list when an actor is selected
+                    if (actorTag.classList.contains('selected')) {
+                        showRandomActors();
+                    }
+                });
+                
+                actorsContainer.appendChild(actorTag);
+            }
+            
+            function addDirectorTag(director, isSelected) {
+                console.log('Adding director tag:', director.name, isSelected);
+                const directorTag = document.createElement('div');
+                directorTag.className = `tag ${isSelected ? 'selected' : ''}`;
+                directorTag.dataset.name = director.name;
+                directorTag.innerHTML = `
+                    <span>${director.name}</span>
+                `;
+                
+                directorTag.addEventListener('click', () => {
+                    directorTag.classList.toggle('selected');
+                    
+                    if (directorTag.classList.contains('selected')) {
+                        // Only add if not already selected
+                        if (!selectedDirectorsList.includes(director.name)) {
+                            selectedDirectorsList.push(director.name);
+                            console.log('Selected director:', director.name);
+                        }
+                    } else {
+                        selectedDirectorsList = selectedDirectorsList.filter(d => d !== director.name);
+                        console.log('Unselected director:', director.name);
+                    }
+                    
+                    updateSelectedDirectors();
+                    
+                    // Refresh the list when a director is selected
+                    if (directorTag.classList.contains('selected')) {
+                        showRandomDirectors();
+                    }
+                });
+                
+                directorsContainer.appendChild(directorTag);
+            }
+            
+            function updateSelectedActors() {
+                selectedActors.innerHTML = '';
+                
+                selectedActorsList.forEach(actor => {
+                    const tag = document.createElement('div');
+                    tag.className = 'selected-tag';
+                    tag.innerHTML = `
+                        <span>${actor}</span>
+                        <button type="button" aria-label="Remove ${actor}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    
+                    tag.querySelector('button').addEventListener('click', () => {
+                        selectedActorsList = selectedActorsList.filter(a => a !== actor);
+                        updateSelectedActors();
+                        // Refresh the list when an actor is removed
+                        showRandomActors();
+                    });
+                    
+                    selectedActors.appendChild(tag);
+                });
+            }
+            
+            function updateSelectedDirectors() {
+                selectedDirectors.innerHTML = '';
+                
+                selectedDirectorsList.forEach(director => {
+                    const tag = document.createElement('div');
+                    tag.className = 'selected-tag';
+                    tag.innerHTML = `
+                        <span>${director}</span>
+                        <button type="button" aria-label="Remove ${director}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    `;
+                    
+                    tag.querySelector('button').addEventListener('click', () => {
+                        selectedDirectorsList = selectedDirectorsList.filter(d => d !== director);
+                        updateSelectedDirectors();
+                        // Refresh the list when a director is removed
+                        showRandomDirectors();
+                    });
+                    
+                    selectedDirectors.appendChild(tag);
+                });
+            }
+            
+            function getRandomItems(items, count) {
+                const shuffled = [...items].sort(() => 0.5 - Math.random());
+                return shuffled.slice(0, count);
+            }
+            
+            async function savePreferences() {
+                // Check if user is authenticated
+                if (!authService.isAuthenticated()) {
+                    // Show auth modal
+                    const authModal = document.getElementById('authCheckModal');
+                    authModal.classList.add('active');
+                    
+                    // Close modal button
+                    const closeModal = authModal.querySelector('.close-modal');
+                    closeModal.addEventListener('click', () => {
+                        authModal.classList.remove('active');
+                    });
+                    
+                    return;
+                }
+                
+                // Prepare data
+                const preferencesData = {
+                    favorite_genres: selectedGenres.join(', '),
+                    favorite_actors: selectedActorsList.join(', '),
+                    favorite_directors: selectedDirectorsList.join(', ')
+                };
+                console.log('Sending preferences data:', preferencesData);
+                
+                // Show loading state
+                saveBtnText.style.display = 'none';
+                saveSpinner.style.display = 'inline-block';
+                
+                try {
+                    // Use the new save endpoint that handles both create and update
+                    console.log('Saving preferences using the unified save endpoint');
+                    const response = await apiRequest(API_CONFIG.ENDPOINTS.SAVE_PREFERENCES, {
+                        method: 'POST',
+                        body: preferencesData
+                    });
+                    console.log('Save preferences response:', response);
+                    
+                    // Hide loading state
+                    saveBtnText.style.display = 'inline-block';
+                    saveSpinner.style.display = 'none';
+                    
+                    if (response.success) {
+                        // Save preferences to local storage
+                        localStorage.setItem(STORAGE_KEYS.PREFERENCES, JSON.stringify(response.data.preferences));
+                        
+                        // Redirect to recommendations page
+                        window.location.href = 'recommendations.html';
+                    } else {
+                        // Handle API error response
+                        console.error('API returned error:', response.error);
+                        
+                        // Show error message
+                        alert(`Không thể lưu sở thích: ${response.error}`);
+                    }
+                } catch (error) {
+                    console.error('Error saving preferences:', error);
+                    
+                    // Hide loading state
+                    saveBtnText.style.display = 'inline-block';
+                    saveSpinner.style.display = 'none';
+                    
+                    // Show error message with more details
+                    alert(`Không thể lưu sở thích. Vui lòng thử lại. Lỗi: ${error.message || 'Lỗi không xác định'}`);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

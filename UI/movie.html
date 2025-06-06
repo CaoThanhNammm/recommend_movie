@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chi Tiết Phim - CineMatch</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/vietnamese.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Additional styles for the movie info table */
+        .movie-info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(230, 57, 70, 0.7);
+        }
+        
+        .movie-info-table th, 
+        .movie-info-table td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .movie-info-table th {
+            width: 200px;
+            font-weight: 600;
+            color: #ffffff;
+            background-color: rgba(230, 57, 70, 0.9);
+            font-size: 1.05rem;
+            letter-spacing: 0.5px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .movie-info-table td {
+            color: #ffffff;
+            font-weight: 400;
+            font-size: 1.05rem;
+            background-color: rgba(0, 0, 0, 0.9);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .movie-info-table tr:last-child th,
+        .movie-info-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .movie-info-table tr:hover td {
+            background-color: rgba(0, 0, 0, 1);
+            color: var(--primary-color);
+        }
+        
+        /* Thêm hiệu ứng cho tiêu đề phần thông tin phim */
+        .movie-detail-section h3 {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            position: relative;
+            padding-bottom: 10px;
+        }
+        
+        .movie-detail-section h3:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background-color: var(--primary-color);
+        }
+        
+        /* Tabs styles */
+        .tabs-container {
+            margin-top: 30px;
+            width: 100%;
+        }
+        
+        .tabs-nav {
+            display: flex;
+            border-bottom: 2px solid rgba(230, 57, 70, 0.7);
+            margin-bottom: 20px;
+            background-color: rgba(0, 0, 0, 0.4);
+            border-radius: 8px 8px 0 0;
+            padding: 0 5px;
+        }
+        
+        .tab-btn {
+            padding: 12px 20px;
+            background: rgba(0, 0, 0, 0.6);
+            border: none;
+            color: #fff;
+            font-size: 1.05rem;
+            font-weight: 500;
+            cursor: pointer;
+            position: relative;
+            opacity: 1;
+            transition: all 0.3s ease;
+            border-radius: 8px 8px 0 0;
+            margin-right: 2px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .tab-btn:hover {
+            color: var(--primary-color);
+            background: rgba(0, 0, 0, 0.8);
+        }
+        
+        .tab-btn.active {
+            color: var(--primary-color);
+            font-weight: 600;
+            background: rgba(0, 0, 0, 0.8);
+        }
+        
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--primary-color);
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 8px;
+            padding: 5px;
+        }
+        
+        .tab-content.active {
+            display: block;
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Toast notification styles */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        
+        .toast {
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            color: white;
+            font-weight: 500;
+            min-width: 300px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: slideIn 0.3s ease, fadeOut 0.5s ease 2.5s forwards;
+            cursor: pointer;
+        }
+        
+        .toast-success {
+            background-color: #2a9d8f;
+        }
+        
+        .toast-error {
+            background-color: #e63946;
+        }
+        
+        .toast-info {
+            background-color: #4361ee;
+        }
+        
+        .toast-icon {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .toast-close {
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header sẽ được import từ file header.html -->
+        <div id="header-container"></div>
+
+        <!-- Movie Detail Content -->
+        <section class="movie-detail" id="movieDetail">
+            <!-- Movie details will be loaded here -->
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Đang tải thông tin phim...</span>
+            </div>
+        </section>
+
+        <!-- Similar Movies section removed to avoid unnecessary API calls -->
+
+        <!-- Footer sẽ được import từ file footer.html -->
+        <div id="footer-container"></div>
+    </div>
+
+    <!-- Rate Movie Modal -->
+    <div class="modal" id="rateMovieModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Đánh Giá Phim Này</h2>
+            <div class="rating-form">
+                <div class="rating-stars">
+                    <i class="far fa-star" data-rating="1"></i>
+                    <i class="far fa-star" data-rating="2"></i>
+                    <i class="far fa-star" data-rating="3"></i>
+                    <i class="far fa-star" data-rating="4"></i>
+                    <i class="far fa-star" data-rating="5"></i>
+                </div>
+                <div class="rating-value">0 / 5</div>
+                <div class="form-group">
+                    <label for="reviewText" class="form-label">Đánh Giá Của Bạn (Tùy Chọn)</label>
+                    <textarea id="reviewText" class="form-input" rows="4" placeholder="Viết suy nghĩ của bạn về bộ phim này..."></textarea>
+                </div>
+                <div class="form-error" id="ratingError"></div>
+                <button id="submitRating" class="btn btn-primary">
+                    <span id="ratingBtnText">Gửi Đánh Giá</span>
+                    <i id="ratingSpinner" class="fas fa-spinner fa-spin" style="display: none;"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Check Modal -->
+    <div class="modal" id="authCheckModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Yêu Cầu Đăng Nhập</h2>
+            <p>Bạn cần đăng nhập để đánh giá phim hoặc đánh dấu phim đã xem.</p>
+            <div class="modal-buttons">
+                <a href="login.html" class="btn btn-primary">Đăng Nhập</a>
+                <a href="register.html" class="btn btn-secondary">Đăng Ký</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/includes.js"></script>
+    <script>
+        // Hàm hiển thị thông báo toast
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            
+            // Tạo toast element
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            
+            // Thêm icon tương ứng với loại thông báo
+            let icon = 'info-circle';
+            if (type === 'success') icon = 'check-circle';
+            if (type === 'error') icon = 'exclamation-circle';
+            
+            // Tạo nội dung toast
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <i class="fas fa-${icon} toast-icon"></i>
+                    <span>${message}</span>
+                </div>
+                <i class="fas fa-times toast-close"></i>
+            `;
+            
+            // Thêm toast vào container
+            toastContainer.appendChild(toast);
+            
+            // Xử lý sự kiện đóng toast khi click
+            toast.querySelector('.toast-close').addEventListener('click', () => {
+                toast.remove();
+            });
+            
+            // Tự động xóa toast sau 3 giây
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 3000);
+        }
+        
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Get movie ID from URL
+            const params = getUrlParams();
+            const movieId = params.id;
+            
+            if (!movieId) {
+                window.location.href = 'movies.html';
+                return;
+            }
+            
+            // Elements
+            const movieDetail = document.getElementById('movieDetail');
+            const similarMovies = document.getElementById('similarMovies');
+            const rateMovieModal = document.getElementById('rateMovieModal');
+            const ratingStars = document.querySelectorAll('.rating-stars i');
+            const ratingValue = document.querySelector('.rating-value');
+            const reviewText = document.getElementById('reviewText');
+            const ratingError = document.getElementById('ratingError');
+            const submitRating = document.getElementById('submitRating');
+            const ratingBtnText = document.getElementById('ratingBtnText');
+            const ratingSpinner = document.getElementById('ratingSpinner');
+            
+            // State
+            let currentRating = 0;
+            let movieData = null;
+            
+            // Load movie details
+            await loadMovieDetails();
+            
+            // Similar movies section removed to avoid unnecessary API calls
+            
+            // Event listeners for rating stars
+            ratingStars.forEach(star => {
+                star.addEventListener('mouseover', () => {
+                    const rating = parseInt(star.dataset.rating);
+                    highlightStars(rating);
+                });
+                
+                star.addEventListener('mouseout', () => {
+                    highlightStars(currentRating);
+                });
+                
+                star.addEventListener('click', () => {
+                    currentRating = parseInt(star.dataset.rating);
+                    highlightStars(currentRating);
+                    ratingValue.textContent = `${currentRating} / 5`;
+                });
+            });
+            
+            // Submit rating
+            submitRating.addEventListener('click', async () => {
+                if (currentRating === 0) {
+                    ratingError.textContent = 'Vui lòng chọn số sao đánh giá';
+                    return;
+                }
+                
+                ratingError.textContent = '';
+                
+                // Show loading state
+                ratingBtnText.style.display = 'none';
+                ratingSpinner.style.display = 'inline-block';
+                
+                try {
+                    const response = await apiRequest(formatEndpoint(API_CONFIG.ENDPOINTS.RATE_MOVIE, { id: movieId }), {
+                        method: 'POST',
+                        body: {
+                            rating: currentRating,
+                            review: reviewText.value.trim()
+                        }
+                    });
+                    
+                    // Hide loading state
+                    ratingBtnText.style.display = 'inline-block';
+                    ratingSpinner.style.display = 'none';
+                    
+                    if (!response.success) {
+                        throw new Error(response.error);
+                    }
+                    
+                    // Close modal
+                    rateMovieModal.classList.remove('active');
+                    
+                    // Reset form
+                    currentRating = 0;
+                    highlightStars(0);
+                    ratingValue.textContent = '0 / 5';
+                    reviewText.value = '';
+                    
+                    // Reload movie details to show updated rating
+                    await loadMovieDetails();
+                    
+                    // Hiển thị thông báo thành công bằng toast
+                    showToast('Đã gửi đánh giá thành công!', 'success');
+                } catch (error) {
+                    console.error('Error submitting rating:', error);
+                    
+                    // Hide loading state
+                    ratingBtnText.style.display = 'inline-block';
+                    ratingSpinner.style.display = 'none';
+                    
+                    // Hiển thị thông báo lỗi bằng toast
+                    showToast(`Lỗi: ${error.message || 'Không thể gửi đánh giá'}`, 'error');
+                    
+                    // Hiển thị lỗi trong form
+                    ratingError.textContent = error.message || 'Không thể gửi đánh giá';
+                }
+            });
+            
+            // Functions
+            async function loadMovieDetails() {
+                try {
+                    // Show loading state
+                    movieDetail.innerHTML = `
+                        <div class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Đang tải thông tin phim...</span>
+                        </div>
+                    `;
+                    
+                    // Make API request
+                    console.log('Loading movie details for ID:', movieId);
+                    const endpoint = formatEndpoint(API_CONFIG.ENDPOINTS.MOVIE_DETAIL, { id: movieId });
+                    console.log('Formatted endpoint:', endpoint);
+                    const response = await apiRequest(endpoint);
+                    
+                    if (!response.success) {
+                        throw new Error(response.error);
+                    }
+                    
+                    movieData = response.data;
+                    
+                    // Update page title
+                    document.title = `${movieData.title} - CineMatch`;
+                    
+                    // Format data
+                    const year = movieData.release_date ? new Date(movieData.release_date).getFullYear() : 'N/A';
+                    const runtime = movieData.runtime ? formatRuntime(movieData.runtime) : 'N/A';
+                    
+                    // Create HTML
+                    movieDetail.innerHTML = `
+                        <div class="movie-detail-header">
+                            <div class="movie-detail-poster">
+                                <img src="${getImageUrl(movieData.poster_path, POSTER_SIZES.LARGE)}" alt="${movieData.title}">
+                            </div>
+                            <div class="movie-detail-info">
+                                <h1 class="movie-detail-title">${movieData.title}</h1>
+                                <div class="movie-detail-meta">
+                                    <span>${year}</span>
+                                    <span>${runtime}</span>
+                                </div>
+                                <div class="movie-detail-rating">
+                                    <div class="stars">${generateStarRating(movieData.vote_average / 2)}</div>
+                                    <span>${movieData.vote_average ? movieData.vote_average.toFixed(1) : 'N/A'} / 10 (${movieData.vote_count || 0} lượt đánh giá)</span>
+                                </div>
+                                <div class="movie-detail-overview">
+                                    <p>${movieData.overview || 'Không có mô tả cho phim này.'}</p>
+                                </div>
+                                <div class="movie-detail-actions">
+                                    <button id="watchBtn" class="btn btn-primary">
+                                        <i class="fas fa-check"></i> Đánh Dấu Đã Xem
+                                    </button>
+                                    <button id="rateBtn" class="btn btn-secondary">
+                                        <i class="fas fa-star"></i> Đánh Giá Phim
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="movie-detail-section">
+                            <h3>Thông Tin Phim</h3>
+                            <div class="tabs-container">
+                                <div class="tabs-nav">
+                                    <button class="tab-btn active" data-tab="director">Đạo Diễn</button>
+                                    <button class="tab-btn" data-tab="production">Công Ty Sản Xuất</button>
+                                    <button class="tab-btn" data-tab="cast">Diễn Viên</button>
+                                    <button class="tab-btn" data-tab="details">Chi Tiết Khác</button>
+                                </div>
+                                
+                                <div id="director" class="tab-content active">
+                                    <table class="movie-info-table">
+                                        <tbody>
+                                            <tr>
+                                                <th>Đạo Diễn</th>
+                                                <td>${Array.isArray(movieData.director) && movieData.director.length > 0 ? movieData.director.join(', ') : 'N/A'}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <div id="production" class="tab-content">
+                                    <table class="movie-info-table">
+                                        <tbody>
+                                            <tr>
+                                                <th>Công Ty Sản Xuất</th>
+                                                <td>${Array.isArray(movieData.production_companies) && movieData.production_companies.length > 0 ? movieData.production_companies.join(', ') : 'N/A'}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <div id="cast" class="tab-content">
+                                    <table class="movie-info-table">
+                                        <tbody>
+                                            <tr>
+                                                <th>Diễn Viên</th>
+                                                <td>${Array.isArray(movieData.cast) && movieData.cast.length > 0 ? movieData.cast.slice(0, 10).join(', ') : 'N/A'}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <div id="details" class="tab-content">
+                                    <table class="movie-info-table">
+                                        <tbody>
+                                            <tr>
+                                                <th>Thể Loại</th>
+                                                <td>${Array.isArray(movieData.genres) && movieData.genres.length > 0 ? movieData.genres.join(', ') : 'N/A'}</td>
+                                            </tr>
+                                            <tr>
+                                                <th>Ngày Phát Hành</th>
+                                                <td>${movieData.release_date ? formatDate(movieData.release_date) : 'N/A'}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Add event listeners
+                    const watchBtn = document.getElementById('watchBtn');
+                    const rateBtn = document.getElementById('rateBtn');
+                    
+                    // Tab switching
+                    document.querySelectorAll('.tab-btn').forEach(button => {
+                        button.addEventListener('click', () => {
+                            // Remove active class from all buttons and contents
+                            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                            
+                            // Add active class to clicked button
+                            button.classList.add('active');
+                            
+                            // Show corresponding content
+                            const tabId = button.getAttribute('data-tab');
+                            document.getElementById(tabId).classList.add('active');
+                        });
+                    });
+                    
+                    watchBtn.addEventListener('click', async () => {
+                        if (!authService.isAuthenticated()) {
+                            document.getElementById('authCheckModal').classList.add('active');
+                            return;
+                        }
+                        
+                        try {
+                            watchBtn.disabled = true;
+                            watchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Đang lưu...';
+                            
+                            const response = await apiRequest(formatEndpoint(API_CONFIG.ENDPOINTS.WATCH_MOVIE, { id: movieId }), {
+                                method: 'POST'
+                            });
+                            
+                            if (!response.success) {
+                                throw new Error(response.error);
+                            }
+                            
+                            watchBtn.innerHTML = '<i class="fas fa-check"></i> Đã Xem';
+                            watchBtn.classList.add('btn-success');
+                            
+                            // Hiển thị thông báo thành công bằng toast thay vì alert
+                            showToast('Đã đánh dấu phim là đã xem!', 'success');
+                        } catch (error) {
+                            console.error('Error marking movie as watched:', error);
+                            
+                            watchBtn.disabled = false;
+                            watchBtn.innerHTML = '<i class="fas fa-check"></i> Đánh Dấu Đã Xem';
+                            
+                            // Hiển thị thông báo lỗi bằng toast
+                            showToast(`Lỗi: ${error.message || 'Không thể đánh dấu phim là đã xem'}`, 'error');
+                        }
+                    });
+                    
+                    rateBtn.addEventListener('click', () => {
+                        if (!authService.isAuthenticated()) {
+                            document.getElementById('authCheckModal').classList.add('active');
+                            return;
+                        }
+                        
+                        rateMovieModal.classList.add('active');
+                    });
+                    
+                    // Close modals when clicking on X
+                    document.querySelectorAll('.close-modal').forEach(closeBtn => {
+                        closeBtn.addEventListener('click', () => {
+                            document.querySelectorAll('.modal').forEach(modal => {
+                                modal.classList.remove('active');
+                            });
+                        });
+                    });
+                    
+                    // Close modals when clicking outside
+                    window.addEventListener('click', (event) => {
+                        document.querySelectorAll('.modal').forEach(modal => {
+                            if (event.target === modal) {
+                                modal.classList.remove('active');
+                            }
+                        });
+                    });
+                } catch (error) {
+                    console.error('Error loading movie details:', error);
+                    
+                    // Show error message
+                    movieDetail.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>${error.message || 'Không thể tải thông tin phim'}</p>
+                            <button class="btn btn-primary" onclick="window.location.reload()">Thử Lại</button>
+                        </div>
+                    `;
+                }
+            }
+            
+            // Highlight stars for rating
+            function highlightStars(rating) {
+                ratingStars.forEach((star, index) => {
+                    if (index < rating) {
+                        star.className = 'fas fa-star';
+                    } else {
+                        star.className = 'far fa-star';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

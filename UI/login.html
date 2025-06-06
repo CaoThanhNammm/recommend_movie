@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập - CineMatch</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .auth-buttons {
+            display: flex;
+            gap: 20px; /* Tăng khoảng cách giữa các nút */
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header Container -->
+        <div id="header-container"></div>
+
+        <!-- Login Form -->
+        <section class="auth-section">
+            <div class="form-container">
+                <div class="form-header">
+                    <h2>Đăng Nhập CineMatch</h2>
+                    <p>Chào mừng trở lại! Vui lòng đăng nhập vào tài khoản của bạn.</p>
+                </div>
+                
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="username" class="form-label">Tên đăng nhập</label>
+                        <input type="text" id="username123" name="username" class="form-input" required>
+                        <div class="form-error" id="usernameError"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password" class="form-label">Mật khẩu</label>
+                        <input type="password" id="password" name="password" class="form-input" required>
+                        <div class="form-error" id="passwordError"></div>
+                    </div>
+                    
+                    <div class="form-error" id="loginError"></div>
+                    
+                    <button type="submit" class="form-submit">
+                        <span id="loginBtnText">Đăng Nhập</span>
+                        <i id="loginSpinner" class="fas fa-spinner fa-spin" style="display: none;"></i>
+                    </button>
+                </form>
+                
+                <div class="form-footer">
+                    <p>Chưa có tài khoản? <a href="register.html">Đăng Ký</a></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer Container -->
+        <div id="footer-container"></div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/includes.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if already logged in
+            if (authService.isAuthenticated()) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Login form submission
+            const loginForm = document.getElementById('loginForm');
+            const loginError = document.getElementById('loginError');
+            const loginBtnText = document.getElementById('loginBtnText');
+            const loginSpinner = document.getElementById('loginSpinner');
+            
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                // Clear previous errors
+                loginError.textContent = '';
+                document.getElementById('usernameError').textContent = '';
+                document.getElementById('passwordError').textContent = '';
+                
+                // Get form data
+                const username = document.getElementById('username123').value;
+                const password = document.getElementById('password').value;
+                
+                // Validate form
+                let isValid = true;
+                
+                if (!username) {
+                    document.getElementById('usernameError').textContent = 'Vui lòng nhập tên đăng nhập';
+                    isValid = false;
+                }
+                
+                if (!password) {
+                    document.getElementById('passwordError').textContent = 'Vui lòng nhập mật khẩu';
+                    isValid = false;
+                }
+                
+                if (!isValid) return;
+                
+                // Show loading state
+                loginBtnText.style.display = 'none';
+                loginSpinner.style.display = 'inline-block';
+                
+                // Login user
+                const result = await authService.login({ username, password });
+                
+                // Hide loading state
+                loginBtnText.style.display = 'inline-block';
+                loginSpinner.style.display = 'none';
+                
+                if (result.success) {
+                    // Check if user has preferences
+                    const preferences = JSON.parse(localStorage.getItem(STORAGE_KEYS.PREFERENCES));
+                    
+                    if (preferences) {
+                        // Redirect to home page
+                        window.location.href = 'index.html';
+                    } else {
+                        // Redirect to preferences page
+                        window.location.href = 'preferences.html';
+                    }
+                } else {
+                    // Show error
+                    loginError.textContent = result.error === 'Invalid username or password' ? 
+                        'Tên đăng nhập hoặc mật khẩu không đúng' : result.error;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

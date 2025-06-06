@@ -1,0 +1,148 @@
+/* CSS bổ sung cho phiên bản tiếng Việt */
+
+/* Cải thiện màu sắc cho bảng thông tin phim */
+.movie-info-table th {
+    color: #ffffff;
+    background-color: rgba(230, 57, 70, 0.1);
+    font-weight: 600;
+}
+
+.movie-info-table td {
+    color: #ffffff;
+    font-weight: 400;
+}
+
+/* Thiết kế lại phần phân trang */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 2rem 0;
+    gap: 1rem;
+}
+
+.pagination-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 30px;
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(230, 57, 70, 0.2);
+}
+
+.pagination-btn:hover:not(:disabled) {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(230, 57, 70, 0.3);
+}
+
+.pagination-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+#pageInfo, #pageInfoBottom {
+    font-weight: 500;
+    color: var(--text-color);
+    background-color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Cải thiện phần tìm kiếm và bộ lọc */
+.movies-search {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    margin-bottom: 2rem;
+}
+
+.search-container {
+    display: flex;
+    width: 100%;
+}
+
+.search-container input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: var(--border-radius) 0 0 var(--border-radius);
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.search-container input:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.search-container button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0 1.5rem;
+    border-radius: 0 var(--border-radius) var(--border-radius) 0;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.search-container button:hover {
+    background-color: var(--primary-dark);
+}
+
+.filter-container {
+    width: 100%;
+}
+
+.filter-select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    background-color: white;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.filter-select:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+/* Responsive design cho phần tìm kiếm và bộ lọc */
+@media (min-width: 768px) {
+    .movies-search {
+        flex-direction: row;
+        align-items: center;
+    }
+    
+    .search-container {
+        width: 70%;
+    }
+    
+    .filter-container {
+        width: 30%;
+    }
+}
+
+/* Ẩn phân trang trên đầu, chỉ hiển thị phân trang dưới cùng */
+.pagination:not(.pagination-bottom) {
+    display: none;
+}
+
+.pagination-bottom {
+    margin-top: 2rem;
+}

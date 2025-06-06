@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đề Xuất Phim - CineMatch</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/vietnamese.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header sẽ được import từ file header.html -->
+        <div id="header-container"></div>
+
+        <!-- Recommendations Header -->
+        <section class="recommendations-header">
+            <h1>Đề Xuất Phim Cá Nhân Hóa</h1>
+            <p>Những bộ phim được chọn riêng cho bạn dựa trên sở thích và lịch sử xem của bạn</p>
+        </section>
+
+        <!-- Recommendations Content -->
+        <section class="recommendations-container">
+            <div class="recommendations-info">
+                <div class="recommendations-stage">
+                    <span>Giai Đoạn Đề Xuất: </span>
+                    <span id="recommendationStage" class="recommendations-count">Đang tải...</span>
+                </div>
+                <div class="recommendations-filters">
+                    <div class="filter-dropdown">
+                        <button class="filter-button" id="limitFilterBtn">
+                            <span id="currentLimit">20</span> Phim
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="filter-menu" id="limitFilterMenu">
+                            <a href="#" data-limit="10">10 Phim</a>
+                            <a href="#" data-limit="20">20 Phim</a>
+                            <a href="#" data-limit="50">50 Phim</a>
+                            <a href="#" data-limit="100">100 Phim</a>
+                        </div>
+                    </div>
+                    <div class="filter-dropdown">
+                        <button class="filter-button" id="minWrFilterBtn">
+                            Đánh Giá Tối Thiểu: <span id="currentMinWr">7.0</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="filter-menu" id="minWrFilterMenu">
+                            <a href="#" data-min-wr="6.0">6.0+</a>
+                            <a href="#" data-min-wr="6.5">6.5+</a>
+                            <a href="#" data-min-wr="7.0">7.0+</a>
+                            <a href="#" data-min-wr="7.5">7.5+</a>
+                            <a href="#" data-min-wr="8.0">8.0+</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="movie-grid" id="recommendationsGrid">
+                <!-- Movies will be loaded here -->
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+                <div class="movie-card skeleton"></div>
+            </div>
+        </section>
+
+        <!-- Footer sẽ được import từ file footer.html -->
+        <div id="footer-container"></div>
+    </div>
+
+    <!-- Auth Check Modal -->
+    <div class="modal" id="authCheckModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Yêu Cầu Đăng Nhập</h2>
+            <p>Bạn cần đăng nhập để xem đề xuất phim cá nhân hóa.</p>
+            <div class="modal-buttons">
+                <a href="login.html" class="btn btn-primary">Đăng Nhập</a>
+                <a href="register.html" class="btn btn-secondary">Đăng Ký</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/includes.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check if user is authenticated
+            if (!authService.isAuthenticated()) {
+                // Show auth modal
+                const authModal = document.getElementById('authCheckModal');
+                authModal.classList.add('active');
+                
+                // Close modal button
+                const closeModal = authModal.querySelector('.close-modal');
+                closeModal.addEventListener('click', () => {
+                    authModal.classList.remove('active');
+                    window.location.href = 'index.html';
+                });
+                
+                return;
+            }
+            
+            // Elements
+            const recommendationsGrid = document.getElementById('recommendationsGrid');
+            const recommendationStage = document.getElementById('recommendationStage');
+            const limitFilterBtn = document.getElementById('limitFilterBtn');
+            const limitFilterMenu = document.getElementById('limitFilterMenu');
+            const currentLimit = document.getElementById('currentLimit');
+            const minWrFilterBtn = document.getElementById('minWrFilterBtn');
+            const minWrFilterMenu = document.getElementById('minWrFilterMenu');
+            const currentMinWr = document.getElementById('currentMinWr');
+            
+            // State
+            let limit = 20;
+            let minWr = 7.0;
+            
+            // Load recommendations
+            loadRecommendations();
+            
+            // Event listeners
+            limitFilterBtn.addEventListener('click', () => {
+                limitFilterMenu.classList.toggle('active');
+                minWrFilterMenu.classList.remove('active');
+            });
+            
+            minWrFilterBtn.addEventListener('click', () => {
+                minWrFilterMenu.classList.toggle('active');
+                limitFilterMenu.classList.remove('active');
+            });
+            
+            // Close filter menus when clicking outside
+            document.addEventListener('click', (event) => {
+                if (!limitFilterBtn.contains(event.target) && !limitFilterMenu.contains(event.target)) {
+                    limitFilterMenu.classList.remove('active');
+                }
+                
+                if (!minWrFilterBtn.contains(event.target) && !minWrFilterMenu.contains(event.target)) {
+                    minWrFilterMenu.classList.remove('active');
+                }
+            });
+            
+            // Limit filter options
+            const limitOptions = limitFilterMenu.querySelectorAll('a');
+            limitOptions.forEach(option => {
+                option.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    // Update limit
+                    limit = parseInt(option.dataset.limit);
+                    currentLimit.textContent = limit;
+                    
+                    // Close menu
+                    limitFilterMenu.classList.remove('active');
+                    
+                    // Reload recommendations
+                    loadRecommendations();
+                });
+            });
+            
+            // Min WR filter options
+            const minWrOptions = minWrFilterMenu.querySelectorAll('a');
+            minWrOptions.forEach(option => {
+                option.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    // Update min_wr
+                    minWr = parseFloat(option.dataset.minWr);
+                    currentMinWr.textContent = minWr.toFixed(1);
+                    
+                    // Close menu
+                    minWrFilterMenu.classList.remove('active');
+                    
+                    // Reload recommendations
+                    loadRecommendations();
+                });
+            });
+            
+            // Functions
+            async function loadRecommendations() {
+                try {
+                    // Show loading state
+                    recommendationsGrid.innerHTML = '';
+                    for (let i = 0; i < limit; i++) {
+                        if (i < 8) { // Only show 8 skeletons to avoid too many DOM elements
+                            recommendationsGrid.innerHTML += '<div class="movie-card skeleton"></div>';
+                        }
+                    }
+                    
+                    recommendationStage.textContent = 'Đang tải...';
+                    
+                    // Make API request
+                    const response = await apiRequest(API_CONFIG.ENDPOINTS.RECOMMENDATIONS_PERSONALIZED, {
+                        method: 'POST',
+                        body: { 
+                            limit,
+                            min_wr: minWr  // Optional parameter for stage 1
+                        }
+                    });
+                    
+                    // Clear loading state
+                    recommendationsGrid.innerHTML = '';
+                    
+                    if (!response.success) {
+                        throw new Error(response.error);
+                    }
+                    
+                    const { recommendations, stage, count } = response.data;
+                    
+                    // Update stage info
+                    let stageText = '';
+                    switch (stage) {
+                        case 'stage1':
+                            stageText = 'Dựa trên Đánh Giá Có Trọng Số';
+                            break;
+                        case 'stage2':
+                            stageText = 'Dựa trên Sở Thích Của Bạn';
+                            break;
+                        case 'stage3':
+                            stageText = 'Dựa trên Sở Thích & Lịch Sử Xem';
+                            break;
+                        default:
+                            stageText = stage;
+                    }
+                    
+                    recommendationStage.textContent = stageText;
+                    
+                    // Display recommendations
+                    if (recommendations && recommendations.length > 0) {
+                        recommendations.forEach(movie => {
+                            // Make sure movie has all required properties
+                            const processedMovie = {
+                                id: movie.id || movie.movie_id,
+                                title: movie.title,
+                                poster_path: movie.poster_path,
+                                vote_average: movie.vote_average,
+                                release_date: movie.release_date,
+                                genres: movie.genres || []
+                            };
+                            recommendationsGrid.innerHTML += createMovieCard(processedMovie);
+                        });
+                        
+                        // Add event listeners to movie cards
+                        addMovieCardEventListeners();
+                    } else {
+                        // Show empty state
+                        recommendationsGrid.innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-film"></i>
+                                <p>Không tìm thấy đề xuất nào. Hãy cập nhật sở thích của bạn.</p>
+                                <a href="preferences.html" class="btn btn-primary">Cập Nhật Sở Thích</a>
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    console.error('Error loading recommendations:', error);
+                    
+                    // Show error state
+                    recommendationsGrid.innerHTML = `
+                        <div class="error-state">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>Không thể tải đề xuất. Vui lòng thử lại.</p>
+                            <button id="retryRecommendations" class="btn btn-primary">Thử Lại</button>
+                        </div>
+                    `;
+                    
+                    recommendationStage.textContent = 'Lỗi';
+                    
+                    // Add retry button event listener
+                    document.getElementById('retryRecommendations')?.addEventListener('click', loadRecommendations);
+                }
+            }
+            
+            // Add event listeners to movie cards
+            function addMovieCardEventListeners() {
+                // Watch later buttons
+                const watchLaterButtons = document.querySelectorAll('.watch-later');
+                watchLaterButtons.forEach(button => {
+                    button.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        
+                        // Get movie ID
+                        const movieCard = button.closest('.movie-card');
+                        const movieId = movieCard.dataset.id;
+                        
+                        // Toggle bookmark icon
+                        const icon = button.querySelector('i');
+                        icon.classList.toggle('far');
+                        icon.classList.toggle('fas');
+                        
+                        // TODO: Implement watch later functionality
+                        console.log('Add to watch later:', movieId);
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>

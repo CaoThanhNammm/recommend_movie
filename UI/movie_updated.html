@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Details - CineMatch</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Additional styles for the movie info table */
+        .movie-info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .movie-info-table th, 
+        .movie-info-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .movie-info-table th {
+            width: 200px;
+            font-weight: 600;
+            color: #e5e5e5;
+        }
+        
+        .movie-info-table td {
+            color: #b8b8b8;
+        }
+        
+        .movie-info-table tr:last-child th,
+        .movie-info-table tr:last-child td {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="navbar-container">
+                <div class="logo">
+                    <a href="index.html">CineMatch</a>
+                </div>
+                <div class="nav-links">
+                    <a href="index.html">Home</a>
+                    <a href="movies.html">Movies</a>
+                    <a href="preferences.html">Preferences</a>
+                </div>
+                <div class="user-actions">
+                    <div class="user-menu" id="userMenuContainer" style="display: none;">
+                        <button id="userMenuBtn" class="user-menu-btn">
+                            <i class="fas fa-user-circle"></i>
+                            <span id="username">Guest</span>
+                        </button>
+                        <div class="user-dropdown" id="userDropdown">
+                            <a href="profile.html" id="profileLink">Profile</a>
+                            <a href="#" id="logoutBtn">Logout</a>
+                        </div>
+                    </div>
+                    <div class="auth-buttons" id="authButtons">
+                        <a href="login.html" class="btn btn-login">Login</a>
+                        <a href="register.html" class="btn btn-register">Register</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Movie Detail Content -->
+        <section class="movie-detail" id="movieDetail">
+            <!-- Movie details will be loaded here -->
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Loading movie details...</span>
+            </div>
+        </section>
+
+        <!-- Similar Movies section removed to avoid unnecessary API calls -->
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>CineMatch</h2>
+                    <p>Your personal movie recommendation system</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-section">
+                        <h3>Navigation</h3>
+                        <ul>
+                            <li><a href="index.html">Home</a></li>
+                            <li><a href="movies.html">Movies</a></li>
+                            <li><a href="preferences.html">Preferences</a></li>
+                            <li><a href="recommendations.html">Recommendations</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-section">
+                        <h3>Account</h3>
+                        <ul>
+                            <li><a href="login.html">Login</a></li>
+                            <li><a href="register.html">Register</a></li>
+                            <li><a href="profile.html">Profile</a></li>
+                            <li><a href="watch-history.html">Watch History</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 CineMatch. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Rate Movie Modal -->
+    <div class="modal" id="rateMovieModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Rate This Movie</h2>
+            <div class="rating-form">
+                <div class="rating-stars">
+                    <i class="far fa-star" data-rating="1"></i>
+                    <i class="far fa-star" data-rating="2"></i>
+                    <i class="far fa-star" data-rating="3"></i>
+                    <i class="far fa-star" data-rating="4"></i>
+                    <i class="far fa-star" data-rating="5"></i>
+                </div>
+                <div class="rating-value">0 / 5</div>
+                <div class="form-group">
+                    <label for="reviewText" class="form-label">Your Review (Optional)</label>
+                    <textarea id="reviewText" class="form-input" rows="4" placeholder="Write your thoughts about this movie..."></textarea>
+                </div>
+                <div class="form-error" id="ratingError"></div>
+                <button id="submitRating" class="btn btn-primary">
+                    <span id="ratingBtnText">Submit Rating</span>
+                    <i id="ratingSpinner" class="fas fa-spinner fa-spin" style="display: none;"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Check Modal -->
+    <div class="modal" id="authCheckModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Login Required</h2>
+            <p>You need to be logged in to rate movies or mark them as watched.</p>
+            <div class="modal-buttons">
+                <a href="login.html" class="btn btn-primary">Login</a>
+                <a href="register.html" class="btn btn-secondary">Register</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/utils.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Get movie ID from URL
+            const params = getUrlParams();
+            const movieId = params.id;
+            
+            if (!movieId) {
+                window.location.href = 'movies.html';
+                return;
+            }
+            
+            // Elements
+            const movieDetail = document.getElementById('movieDetail');
+            const similarMovies = document.getElementById('similarMovies');
+            const rateMovieModal = document.getElementById('rateMovieModal');
+            const ratingStars = document.querySelectorAll('.rating-stars i');
+            const ratingValue = document.querySelector('.rating-value');
+            const reviewText = document.getElementById('reviewText');
+            const ratingError = document.getElementById('ratingError');
+            const submitRating = document.getElementById('submitRating');
+            const ratingBtnText = document.getElementById('ratingBtnText');
+            const ratingSpinner = document.getElementById('ratingSpinner');
+            
+            // State
+            let currentRating = 0;
+            let movieData = null;
+            
+            // Load movie details
+            await loadMovieDetails();
+            
+            // Similar movies section removed to avoid unnecessary API calls
+            
+            // Event listeners for rating stars
+            ratingStars.forEach(star => {
+                star.addEventListener('mouseover', () => {
+                    const rating = parseInt(star.dataset.rating);
+                    highlightStars(rating);
+                });
+                
+                star.addEventListener('mouseout', () => {
+                    highlightStars(currentRating);
+                });
+                
+                star.addEventListener('click', () => {
+                    currentRating = parseInt(star.dataset.rating);
+                    highlightStars(currentRating);
+                    ratingValue.textContent = `${currentRating} / 5`;
+                });
+            });
+            
+            // Submit rating
+            submitRating.addEventListener('click', async () => {
+                if (currentRating === 0) {
+                    ratingError.textContent = 'Please select a rating';
+                    return;
+                }
+                
+                ratingError.textContent = '';
+                
+                // Show loading state
+                ratingBtnText.style.display = 'none';
+                ratingSpinner.style.display = 'inline-block';
+                
+                try {
+                    const response = await apiRequest(formatEndpoint(API_CONFIG.ENDPOINTS.RATE_MOVIE, { id: movieId }), {
+                        method: 'POST',
+                        body: {
+                            rating: currentRating,
+                            review: reviewText.value.trim()
+                        }
+                    });
+                    
+                    // Hide loading state
+                    ratingBtnText.style.display = 'inline-block';
+                    ratingSpinner.style.display = 'none';
+                    
+                    if (!response.success) {
+                        throw new Error(response.error);
+                    }
+                    
+                    // Close modal
+                    rateMovieModal.classList.remove('active');
+                    
+                    // Reset form
+                    currentRating = 0;
+                    highlightStars(0);
+                    ratingValue.textContent = '0 / 5';
+                    reviewText.value = '';
+                    
+                    // Reload movie details to show updated rating
+                    await loadMovieDetails();
+                    
+                    // Show success message
+                    alert('Rating submitted successfully!');
+                } catch (error) {
+                    console.error('Error submitting rating:', error);
+                    
+                    // Hide loading state
+                    ratingBtnText.style.display = 'inline-block';
+                    ratingSpinner.style.display = 'none';
+                    
+                    // Show error
+                    ratingError.textContent = error.message || 'Failed to submit rating';
+                }
+            });
+            
+            // Functions
+            async function loadMovieDetails() {
+                try {
+                    // Show loading state
+                    movieDetail.innerHTML = `
+                        <div class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>Loading movie details...</span>
+                        </div>
+                    `;
+                    
+                    // Make API request
+                    console.log('Loading movie details for ID:', movieId);
+                    const endpoint = formatEndpoint(API_CONFIG.ENDPOINTS.MOVIE_DETAIL, { id: movieId });
+                    console.log('Formatted endpoint:', endpoint);
+                    const response = await apiRequest(endpoint);
+                    
+                    if (!response.success) {
+                        throw new Error(response.error);
+                    }
+                    
+                    movieData = response.data;
+                    
+                    // Update page title
+                    document.title = `${movieData.title} - CineMatch`;
+                    
+                    // Format data
+                    const year = movieData.release_date ? new Date(movieData.release_date).getFullYear() : 'N/A';
+                    const runtime = movieData.runtime ? formatRuntime(movieData.runtime) : 'N/A';
+                    
+                    // Create HTML
+                    movieDetail.innerHTML = `
+                        <div class="movie-detail-header">
+                            <div class="movie-detail-poster">
+                                <img src="${getImageUrl(movieData.poster_path, POSTER_SIZES.LARGE)}" alt="${movieData.title}">
+                            </div>
+                            <div class="movie-detail-info">
+                                <h1 class="movie-detail-title">${movieData.title}</h1>
+                                <div class="movie-detail-meta">
+                                    <span>${year}</span>
+                                    <span>${runtime}</span>
+                                </div>
+                                <div class="movie-detail-rating">
+                                    <div class="stars">${generateStarRating(movieData.vote_average / 2)}</div>
+                                    <span>${movieData.vote_average ? movieData.vote_average.toFixed(1) : 'N/A'} / 10 (${movieData.vote_count || 0} votes)</span>
+                                </div>
+                                <div class="movie-detail-overview">
+                                    <p>${movieData.overview || 'No overview available.'}</p>
+                                </div>
+                                <div class="movie-detail-actions">
+                                    <button id="watchBtn" class="btn btn-primary">
+                                        <i class="fas fa-check"></i> Mark as Watched
+                                    </button>
+                                    <button id="rateBtn" class="btn btn-secondary">
+                                        <i class="fas fa-star"></i> Rate Movie
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="movie-detail-section">
+                            <h3>Movie Information</h3>
+                            <table class="movie-info-table">
+                                <tbody>
+                                    <tr>
+                                        <th>Director</th>
+                                        <td>${movieData.director || 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Production Companies</th>
+                                        <td>${Array.isArray(movieData.production_companies) && movieData.production_companies.length > 0 ? movieData.production_companies.join(', ') : 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Cast</th>
+                                        <td>${Array.isArray(movieData.cast) && movieData.cast.length > 0 ? movieData.cast.slice(0, 10).join(', ') : 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Genres</th>
+                                        <td>${Array.isArray(movieData.genres) && movieData.genres.length > 0 ? movieData.genres.join(', ') : 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Release Date</th>
+                                        <td>${movieData.release_date ? formatDate(movieData.release_date) : 'N/A'}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    
+                    // Add event listeners
+                    const watchBtn = document.getElementById('watchBtn');
+                    const rateBtn = document.getElementById('rateBtn');
+                    
+                    watchBtn.addEventListener('click', async () => {
+                        if (!authService.isAuthenticated()) {
+                            document.getElementById('authCheckModal').classList.add('active');
+                            return;
+                        }
+                        
+                        try {
+                            watchBtn.disabled = true;
+                            watchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                            
+                            const response = await apiRequest(formatEndpoint(API_CONFIG.ENDPOINTS.WATCH_MOVIE, { id: movieId }), {
+                                method: 'POST'
+                            });
+                            
+                            if (!response.success) {
+                                throw new Error(response.error);
+                            }
+                            
+                            watchBtn.innerHTML = '<i class="fas fa-check"></i> Watched';
+                            watchBtn.classList.add('btn-success');
+                            
+                            // Show success message
+                            alert('Movie marked as watched!');
+                        } catch (error) {
+                            console.error('Error marking movie as watched:', error);
+                            
+                            watchBtn.disabled = false;
+                            watchBtn.innerHTML = '<i class="fas fa-check"></i> Mark as Watched';
+                            
+                            // Show error message
+                            alert(`Error: ${error.message || 'Failed to mark movie as watched'}`);
+                        }
+                    });
+                    
+                    rateBtn.addEventListener('click', () => {
+                        if (!authService.isAuthenticated()) {
+                            document.getElementById('authCheckModal').classList.add('active');
+                            return;
+                        }
+                        
+                        rateMovieModal.classList.add('active');
+                    });
+                    
+                    // Close modals when clicking on X
+                    document.querySelectorAll('.close-modal').forEach(closeBtn => {
+                        closeBtn.addEventListener('click', () => {
+                            document.querySelectorAll('.modal').forEach(modal => {
+                                modal.classList.remove('active');
+                            });
+                        });
+                    });
+                    
+                    // Close modals when clicking outside
+                    window.addEventListener('click', (event) => {
+                        document.querySelectorAll('.modal').forEach(modal => {
+                            if (event.target === modal) {
+                                modal.classList.remove('active');
+                            }
+                        });
+                    });
+                } catch (error) {
+                    console.error('Error loading movie details:', error);
+                    
+                    // Show error message
+                    movieDetail.innerHTML = `
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>${error.message || 'Failed to load movie details'}</p>
+                            <button class="btn btn-primary" onclick="window.location.reload()">Retry</button>
+                        </div>
+                    `;
+                }
+            }
+            
+            // Highlight stars for rating
+            function highlightStars(rating) {
+                ratingStars.forEach((star, index) => {
+                    if (index < rating) {
+                        star.className = 'fas fa-star';
+                    } else {
+                        star.className = 'far fa-star';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
