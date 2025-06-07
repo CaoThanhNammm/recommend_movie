@@ -8,6 +8,60 @@
     <link rel="stylesheet" href="css/vietnamese.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Pagination styles */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .pagination-btn {
+            background-color: var(--card-color);
+            border: 1px solid #ddd;
+            color: var(--text-color);
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+        }
+        
+        .pagination-btn:hover:not(:disabled) {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .recommendations-count-info {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+        
+        /* Phân trang ở dưới */
+        .pagination-bottom {
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        /* Đảm bảo phân trang hiển thị đúng */
+        .movies-info {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -27,6 +81,10 @@
                     <span>Giai Đoạn Đề Xuất: </span>
                     <span id="recommendationStage" class="recommendations-count">Đang tải...</span>
                 </div>
+                <div class="recommendations-count-info">
+                    <span>Số phim đã tải: </span>
+                    <span id="loadedMoviesCount">0</span>/<span id="requestedMoviesCount">0</span>
+                </div>
                 <div class="recommendations-filters">
                     <div class="filter-dropdown">
                         <button class="filter-button" id="limitFilterBtn">
@@ -38,19 +96,6 @@
                             <a href="#" data-limit="20">20 Phim</a>
                             <a href="#" data-limit="50">50 Phim</a>
                             <a href="#" data-limit="100">100 Phim</a>
-                        </div>
-                    </div>
-                    <div class="filter-dropdown">
-                        <button class="filter-button" id="minWrFilterBtn">
-                            Đánh Giá Tối Thiểu: <span id="currentMinWr">7.0</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                        <div class="filter-menu" id="minWrFilterMenu">
-                            <a href="#" data-min-wr="6.0">6.0+</a>
-                            <a href="#" data-min-wr="6.5">6.5+</a>
-                            <a href="#" data-min-wr="7.0">7.0+</a>
-                            <a href="#" data-min-wr="7.5">7.5+</a>
-                            <a href="#" data-min-wr="8.0">8.0+</a>
                         </div>
                     </div>
                 </div>
@@ -67,6 +112,20 @@
                 <div class="movie-card skeleton"></div>
                 <div class="movie-card skeleton"></div>
             </div>
+            
+            <div class="movies-info">
+                <div class="pagination" id="paginationContainer">
+                    <button id="prevPageBtn" class="pagination-btn" disabled>
+                        <i class="fas fa-chevron-left"></i> Trước
+                    </button>
+                    <span id="pageInfo">Trang 1 / 1</span>
+                    <button id="nextPageBtn" class="pagination-btn" disabled>
+                        Sau <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            
+            
         </section>
 
         <!-- Footer sẽ được import từ file footer.html -->
@@ -114,13 +173,21 @@
             const limitFilterBtn = document.getElementById('limitFilterBtn');
             const limitFilterMenu = document.getElementById('limitFilterMenu');
             const currentLimit = document.getElementById('currentLimit');
-            const minWrFilterBtn = document.getElementById('minWrFilterBtn');
-            const minWrFilterMenu = document.getElementById('minWrFilterMenu');
-            const currentMinWr = document.getElementById('currentMinWr');
+            const loadedMoviesCount = document.getElementById('loadedMoviesCount');
+            const requestedMoviesCount = document.getElementById('requestedMoviesCount');
+            
+            // Pagination elements
+            const paginationContainer = document.getElementById('paginationContainer');
+            const prevPageBtn = document.getElementById('prevPageBtn');
+            const nextPageBtn = document.getElementById('nextPageBtn');
+            const pageInfo = document.getElementById('pageInfo');
             
             // State
             let limit = 20;
-            let minWr = 7.0;
+            let currentPage = 1;
+            let totalPages = 1;
+            let allMovies = [];
+            let moviesPerPage = 8; // Số phim hiển thị trên mỗi trang, mặc định là 8 phim
             
             // Load recommendations
             loadRecommendations();
@@ -128,22 +195,29 @@
             // Event listeners
             limitFilterBtn.addEventListener('click', () => {
                 limitFilterMenu.classList.toggle('active');
-                minWrFilterMenu.classList.remove('active');
             });
             
-            minWrFilterBtn.addEventListener('click', () => {
-                minWrFilterMenu.classList.toggle('active');
-                limitFilterMenu.classList.remove('active');
+            // Pagination event listeners
+            prevPageBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    displayMoviesForPage(currentPage);
+                    window.scrollTo(0, 0); // Cuộn lên đầu trang
+                }
+            });
+            
+            nextPageBtn.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    displayMoviesForPage(currentPage);
+                    window.scrollTo(0, 0); // Cuộn lên đầu trang
+                }
             });
             
             // Close filter menus when clicking outside
             document.addEventListener('click', (event) => {
                 if (!limitFilterBtn.contains(event.target) && !limitFilterMenu.contains(event.target)) {
                     limitFilterMenu.classList.remove('active');
-                }
-                
-                if (!minWrFilterBtn.contains(event.target) && !minWrFilterMenu.contains(event.target)) {
-                    minWrFilterMenu.classList.remove('active');
                 }
             });
             
@@ -165,43 +239,36 @@
                 });
             });
             
-            // Min WR filter options
-            const minWrOptions = minWrFilterMenu.querySelectorAll('a');
-            minWrOptions.forEach(option => {
-                option.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    
-                    // Update min_wr
-                    minWr = parseFloat(option.dataset.minWr);
-                    currentMinWr.textContent = minWr.toFixed(1);
-                    
-                    // Close menu
-                    minWrFilterMenu.classList.remove('active');
-                    
-                    // Reload recommendations
-                    loadRecommendations();
-                });
-            });
-            
             // Functions
             async function loadRecommendations() {
                 try {
+                    // Reset pagination
+                    currentPage = 1;
+                    paginationContainer.style.display = 'none';
+                    
+                    // Remove any existing empty or error state class
+                    recommendationsGrid.classList.remove('movie-grid-empty');
+                    
                     // Show loading state
                     recommendationsGrid.innerHTML = '';
-                    for (let i = 0; i < limit; i++) {
-                        if (i < 8) { // Only show 8 skeletons to avoid too many DOM elements
-                            recommendationsGrid.innerHTML += '<div class="movie-card skeleton"></div>';
-                        }
+                    // Hiển thị số skeleton bằng với số phim đã chọn, tối đa là 10 skeleton
+                    const skeletonCount = Math.min(limit, 10);
+                    for (let i = 0; i < skeletonCount; i++) {
+                        recommendationsGrid.innerHTML += '<div class="movie-card skeleton"></div>';
                     }
                     
                     recommendationStage.textContent = 'Đang tải...';
+                    requestedMoviesCount.textContent = limit;
+                    loadedMoviesCount.textContent = '0';
                     
                     // Make API request
+                    // Yêu cầu số phim lớn hơn để đảm bảo nhận đủ số phim
+                    // Tăng limit lên để bù đắp cho việc API trả về ít hơn số phim yêu cầu
+                    const adjustedLimit = Math.ceil(limit * 1.5); // Tăng limit lên 50% để đảm bảo đủ số phim
                     const response = await apiRequest(API_CONFIG.ENDPOINTS.RECOMMENDATIONS_PERSONALIZED, {
                         method: 'POST',
                         body: { 
-                            limit,
-                            min_wr: minWr  // Optional parameter for stage 1
+                            limit: adjustedLimit
                         }
                     });
                     
@@ -234,23 +301,47 @@
                     
                     // Display recommendations
                     if (recommendations && recommendations.length > 0) {
-                        recommendations.forEach(movie => {
-                            // Make sure movie has all required properties
-                            const processedMovie = {
+                        // Lưu số phim thực tế nhận được từ API
+                        const receivedMoviesCount = recommendations.length;
+                        
+                        // Cập nhật số phim đã tải tạm thời (sẽ được cập nhật lại trong displayMoviesForPage)
+                        loadedMoviesCount.textContent = Math.min(receivedMoviesCount, limit);
+                        
+                        // Process all movies
+                        allMovies = recommendations.map(movie => {
+                            return {
                                 id: movie.id || movie.movie_id,
                                 title: movie.title,
                                 poster_path: movie.poster_path,
                                 vote_average: movie.vote_average,
+                                wr: movie.wr,
                                 release_date: movie.release_date,
                                 genres: movie.genres || []
                             };
-                            recommendationsGrid.innerHTML += createMovieCard(processedMovie);
                         });
                         
-                        // Add event listeners to movie cards
-                        addMovieCardEventListeners();
+                        // Giữ số phim trên mỗi trang là 8 phim
+                        // Tính toán số trang dựa trên số phim thực tế
+                        const moviesToShow = Math.min(allMovies.length, limit);
+                        totalPages = Math.ceil(moviesToShow / moviesPerPage);
+                        
+                        // Hiển thị phân trang
+                        paginationContainer.style.display = 'flex';
+                        
+                        // Cập nhật trạng thái nút phân trang
+                        prevPageBtn.disabled = currentPage <= 1;
+                        nextPageBtn.disabled = currentPage >= totalPages;
+                        
+                        // Cập nhật thông tin trang
+                        pageInfo.textContent = `Trang ${currentPage} / ${totalPages}`;
+                        
+                        
+                        // Display first page
+                        displayMoviesForPage(currentPage);
+                        
                     } else {
-                        // Show empty state
+                        // Show empty state and adjust container for centering
+                        recommendationsGrid.classList.add('movie-grid-empty');
                         recommendationsGrid.innerHTML = `
                             <div class="empty-state">
                                 <i class="fas fa-film"></i>
@@ -258,11 +349,14 @@
                                 <a href="preferences.html" class="btn btn-primary">Cập Nhật Sở Thích</a>
                             </div>
                         `;
+                        loadedMoviesCount.textContent = '0';
+                        paginationContainer.style.display = 'none';
                     }
                 } catch (error) {
                     console.error('Error loading recommendations:', error);
                     
-                    // Show error state
+                    // Show error state and adjust container for centering
+                    recommendationsGrid.classList.add('movie-grid-empty');
                     recommendationsGrid.innerHTML = `
                         <div class="error-state">
                             <i class="fas fa-exclamation-circle"></i>
@@ -272,10 +366,45 @@
                     `;
                     
                     recommendationStage.textContent = 'Lỗi';
+                    loadedMoviesCount.textContent = '0';
+                    paginationContainer.style.display = 'none';
                     
                     // Add retry button event listener
                     document.getElementById('retryRecommendations')?.addEventListener('click', loadRecommendations);
                 }
+            }
+            
+            // Function to display movies for a specific page
+            function displayMoviesForPage(page) {
+                // Clear current movies
+                recommendationsGrid.innerHTML = '';
+                
+                // Giới hạn số phim hiển thị theo đúng số phim đã yêu cầu
+                const totalMoviesToShow = Math.min(allMovies.length, limit);
+                
+                // Tính toán phạm vi phim cần hiển thị cho trang hiện tại
+                const startIndex = (page - 1) * moviesPerPage;
+                const endIndex = Math.min(startIndex + moviesPerPage, totalMoviesToShow);
+                
+                // Hiển thị thông tin số phim đang hiển thị
+                const displayingCount = endIndex - startIndex;
+                console.log(`Hiển thị ${displayingCount} phim (${startIndex + 1}-${endIndex}) trên tổng số ${totalMoviesToShow} phim`);
+                
+                // Display movies for current page
+                for (let i = startIndex; i < endIndex; i++) {
+                    recommendationsGrid.innerHTML += createMovieCard(allMovies[i]);
+                }
+                
+                // Update pagination buttons
+                prevPageBtn.disabled = page <= 1;
+                nextPageBtn.disabled = page >= totalPages;
+                pageInfo.textContent = `Trang ${page} / ${totalPages}`;
+                
+                // Update loaded movies count to show the actual number of movies available
+                loadedMoviesCount.textContent = totalMoviesToShow;
+                
+                // Add event listeners to movie cards
+                addMovieCardEventListeners();
             }
             
             // Add event listeners to movie cards

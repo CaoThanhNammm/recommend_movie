@@ -30,16 +30,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             // Show loading state
             recommendedMoviesContainer.innerHTML = '';
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < 8; i++) {
                 recommendedMoviesContainer.innerHTML += '<div class="movie-card skeleton"></div>';
             }
             
             // Make API request
+            // Yêu cầu số phim lớn hơn để đảm bảo nhận đủ 8 phim
             const response = await apiRequest(API_CONFIG.ENDPOINTS.RECOMMENDATIONS_PERSONALIZED, {
                 method: 'POST',
                 body: { 
-                    limit: 4,
-                    min_wr: 7.0  // Optional parameter for stage 1 recommendations
+                    limit: 20, // Tăng limit lên để đảm bảo nhận đủ 8 phim
+                    min_wr: 6.5  // Giảm điểm WR để có nhiều phim hơn
                 }
             });
             
@@ -54,13 +55,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             // Display recommendations
             if (recommendations && recommendations.length > 0) {
-                recommendations.forEach(movie => {
+                // Lấy chính xác 8 phim đầu tiên từ danh sách đề xuất
+                const moviesToShow = recommendations.slice(0, 8);
+                
+                // Kiểm tra xem có đủ 8 phim không
+                if (moviesToShow.length < 8) {
+                    console.warn(`Chỉ nhận được ${moviesToShow.length} phim từ API thay vì 8 phim như yêu cầu`);
+                }
+                
+                moviesToShow.forEach(movie => {
                     // Make sure movie has all required properties
                     const processedMovie = {
                         id: movie.id || movie.movie_id,
                         title: movie.title,
                         poster_path: movie.poster_path,
                         vote_average: movie.vote_average,
+                        wr: movie.wr,
                         release_date: movie.release_date,
                         genres: movie.genres || []
                     };
@@ -70,12 +80,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Add event listeners to movie cards
                 addMovieCardEventListeners(recommendedMoviesContainer);
             } else {
-                // Show empty state
+                // Show empty state and adjust container for centering
+                recommendedMoviesContainer.classList.add('movie-grid-empty');
                 recommendedMoviesContainer.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-film"></i>
-                        <p>No recommendations found. Try setting your preferences.</p>
-                        <a href="preferences.html" class="btn btn-primary">Set Preferences</a>
+                        <p>Không tìm thấy đề xuất nào. Hãy cập nhật sở thích của bạn.</p>
+                        <a href="preferences.html" class="btn btn-primary">Cập Nhật Sở Thích</a>
                     </div>
                 `;
             }
@@ -101,12 +112,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             // Show loading state
             topRatedMoviesContainer.innerHTML = '';
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < 8; i++) {
                 topRatedMoviesContainer.innerHTML += '<div class="movie-card skeleton"></div>';
             }
             
             // Make API request
-            const response = await apiRequest(API_CONFIG.ENDPOINTS.TOP_WEIGHTED + '/?limit=4');
+            const response = await apiRequest(API_CONFIG.ENDPOINTS.TOP_WEIGHTED + '/?limit=8');
             
             // Clear loading state
             topRatedMoviesContainer.innerHTML = '';
@@ -127,6 +138,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         title: movie.title,
                         poster_path: movie.poster_path,
                         vote_average: movie.vote_average,
+                        wr: movie.wr,
                         release_date: movie.release_date,
                         genres: movie.genres || []
                     };

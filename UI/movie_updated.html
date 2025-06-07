@@ -307,8 +307,8 @@
                                     <span>${runtime}</span>
                                 </div>
                                 <div class="movie-detail-rating">
-                                    <div class="stars">${generateStarRating(movieData.vote_average / 2)}</div>
-                                    <span>${movieData.vote_average ? movieData.vote_average.toFixed(1) : 'N/A'} / 10 (${movieData.vote_count || 0} votes)</span>
+                                    <div class="stars">${generateStarRating((movieData.wr || movieData.vote_average) / 2)}</div>
+                                    <span>${movieData.wr ? movieData.wr.toFixed(1) : 'N/A'} / 10 (${movieData.vote_count || 0} votes)</span>
                                 </div>
                                 <div class="movie-detail-overview">
                                     <p>${movieData.overview || 'No overview available.'}</p>

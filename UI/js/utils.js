@@ -85,6 +85,7 @@ function createMovieCard(movie) {
         title: movie.title || 'Unknown Title',
         poster_path: movie.poster_path || null,
         vote_average: movie.vote_average || 0,
+        wr: movie.wr || 0,
         release_date: movie.release_date || '',
         genres: movie.genres || []
     };
@@ -107,7 +108,7 @@ function createMovieCard(movie) {
         <div class="movie-card" data-id="${movieData.id}">
             <div class="movie-poster">
                 <img src="${getImageUrl(movieData.poster_path)}" alt="${movieData.title}">
-                <div class="movie-rating">${movieData.vote_average ? movieData.vote_average.toFixed(1) : 'N/A'}</div>
+                <div class="movie-rating">${movieData.wr ? movieData.wr.toFixed(1) : 'N/A'}</div>
             </div>
             <div class="movie-info">
                 <h3 class="movie-title">${movieData.title}</h3>

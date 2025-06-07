@@ -56,11 +56,43 @@ class Movie(db.Model):
             self.cast = '[]'
             return []
         try:
+            # Try to parse as JSON
             return json.loads(self.cast)
         except (json.JSONDecodeError, TypeError):
-            # If there's an error parsing, reset to empty array
-            self.cast = '[]'
-            return []
+            # If there's an error parsing, try to fix common issues
+            try:
+                # Replace single quotes with double quotes
+                fixed_str = self.cast.replace("'", "\"")
+                # Fix unescaped quotes in strings
+                fixed_str = fixed_str.replace('\\"', '\\\\"')
+                # Fix missing commas
+                fixed_str = fixed_str.replace('"}{"', '"},{"')
+                
+                # Try to parse the fixed string
+                return json.loads(fixed_str)
+            except (json.JSONDecodeError, TypeError):
+                # If still failing, try to extract data using regex
+                import re
+                import logging
+                logger = logging.getLogger(__name__)
+                
+                try:
+                    # Extract name fields using regex
+                    name_pattern = r"['\"]name['\"]:\s*['\"]([^'\"]*)['\"]"
+                    names = re.findall(name_pattern, self.cast)
+                    if names:
+                        logger.info(f"Extracted {len(names)} names from cast using regex")
+                        return [{'name': name} for name in names]
+                except Exception as regex_error:
+                    logger.error(f"Error extracting names with regex: {str(regex_error)}")
+                
+                # If all else fails, reset to empty array
+                self.cast = '[]'
+                try:
+                    db.session.commit()
+                except:
+                    db.session.rollback()
+                return []
     
     def get_production_companies(self):
         if self.production_companies is None or self.production_companies == '':
@@ -76,16 +108,63 @@ class Movie(db.Model):
             self.crew = '[]'
             return []
         try:
+            # Try to parse as JSON
             return json.loads(self.crew)
         except (json.JSONDecodeError, TypeError):
-            # If there's an error parsing, reset to empty array
-            self.crew = '[]'
-            return []
+            # If there's an error parsing, try to fix common issues
+            try:
+                # Replace single quotes with double quotes
+                fixed_str = self.crew.replace("'", "\"")
+                # Fix unescaped quotes in strings
+                fixed_str = fixed_str.replace('\\"', '\\\\"')
+                # Fix missing commas
+                fixed_str = fixed_str.replace('"}{"', '"},{"')
+                
+                # Try to parse the fixed string
+                return json.loads(fixed_str)
+            except (json.JSONDecodeError, TypeError):
+                # If still failing, try to extract data using regex
+                import re
+                import logging
+                logger = logging.getLogger(__name__)
+                
+                try:
+                    # Extract name fields using regex
+                    name_pattern = r"['\"]name['\"]:\s*['\"]([^'\"]*)['\"]"
+                    names = re.findall(name_pattern, self.crew)
+                    if names:
+                        logger.info(f"Extracted {len(names)} names from crew using regex")
+                        return [{'name': name} for name in names]
+                except Exception as regex_error:
+                    logger.error(f"Error extracting names with regex: {str(regex_error)}")
+                
+                # If all else fails, reset to empty array
+                self.crew = '[]'
+                try:
+                    db.session.commit()
+                except:
+                    db.session.rollback()
+                return []
     
     def get_director(self):
-        crew_list = self.get_crew_list()
-        directors = [person['name'] for person in crew_list if isinstance(person, dict) and 'job' in person and person['job'] == 'Director']
-        return directors[0] if directors else None
+        try:
+            crew_list = self.get_crew_list()
+            directors = []
+            
+            # Handle different crew data formats
+            for person in crew_list:
+                if isinstance(person, dict):
+                    # Check for 'job' field with value 'Director'
+                    if 'job' in person and person['job'] == 'Director' and 'name' in person:
+                        directors.append(person['name'])
+                    # Some APIs use 'department' instead of 'job'
+                    elif 'department' in person and person['department'] == 'Directing' and 'name' in person:
+                        directors.append(person['name'])
+            
+            return directors[0] if directors else None
+        except Exception:
+            # Return None if any error occurs
+            return None
         
     def get_production_companies_list(self):
         if self.production_companies is None or self.production_companies == '':
@@ -134,8 +213,37 @@ class Movie(db.Model):
                             fixed_str = fixed_str.replace('\\"', '\\\\"')
                             # Fix missing commas
                             fixed_str = fixed_str.replace('"}{"', '"},{"')
+                            
+                            # Fix truncated JSON strings
+                            if field_name in ['cast', 'crew']:
+                                # Check if the string is truncated
+                                if not (fixed_str.endswith(']') or fixed_str.endswith('"}]')):
+                                    # Try to find the last complete object
+                                    last_complete_obj = fixed_str.rfind('"}')
+                                    if last_complete_obj > 0:
+                                        fixed_str = fixed_str[:last_complete_obj+2] + ']'
+                                    else:
+                                        # If we can't find a good truncation point, return empty array
+                                        return []
+                            
                             # Try to parse again
-                            return json.loads(fixed_str)
+                            try:
+                                return json.loads(fixed_str)
+                            except json.JSONDecodeError:
+                                # If still failing, try more aggressive fixes
+                                if field_name in ['cast', 'crew']:
+                                    # Try to extract just the first few valid objects
+                                    import re
+                                    pattern = r'\{"[^}]+"\s*:\s*"[^}]+"\}'
+                                    matches = re.findall(pattern, fixed_str)
+                                    if matches:
+                                        # Construct a valid JSON array with the extracted objects
+                                        valid_json = '[' + ','.join(matches) + ']'
+                                        try:
+                                            return json.loads(valid_json)
+                                        except:
+                                            pass
+                                return []
                     elif isinstance(json_str, list):
                         return json_str
                     else:
@@ -150,9 +258,20 @@ class Movie(db.Model):
                     import re
                     if field_name in ['cast', 'crew', 'keywords', 'genres']:
                         try:
-                            # Extract name fields using regex
-                            name_pattern = r"'name':\s*'([^']*)'"
-                            names = re.findall(name_pattern, json_str)
+                            # Extract name fields using regex - improved pattern to handle more cases
+                            name_patterns = [
+                                r"'name':\s*'([^']*)'",  # Single quotes
+                                r'"name":\s*"([^"]*)"',  # Double quotes
+                                r"name['\"]?\s*:\s*['\"]([^'\"]*)['\"]"  # More flexible pattern
+                            ]
+                            
+                            names = []
+                            for pattern in name_patterns:
+                                found_names = re.findall(pattern, json_str)
+                                if found_names:
+                                    names.extend(found_names)
+                                    break  # Use the first successful pattern
+                                    
                             if names:
                                 logger.info(f"Extracted {len(names)} names from {field_name} using regex")
                                 return [{'name': name} for name in names]
@@ -175,21 +294,45 @@ class Movie(db.Model):
             production_companies_data = safe_parse_json(self.production_companies, 'production_companies')
          
         
-            # Extract names from cast
+            # Extract names from cast with better error handling
             cast_names = []
-            for person in cast_data:
-                if isinstance(person, dict) and 'name' in person:
-                    cast_names.append(person['name'])
-                elif isinstance(person, str):
-                    cast_names.append(person)
+            try:
+                if isinstance(cast_data, list):
+                    for person in cast_data:
+                        if isinstance(person, dict) and 'name' in person:
+                            cast_names.append(person['name'])
+                        elif isinstance(person, str):
+                            cast_names.append(person)
+                elif isinstance(cast_data, dict) and 'name' in cast_data:
+                    # Handle case where cast_data is a single object instead of a list
+                    cast_names.append(cast_data['name'])
+                elif isinstance(cast_data, str):
+                    # Handle case where cast_data is a string
+                    cast_names.append(cast_data)
+            except Exception as e:
+                logger.error(f"Error extracting cast names: {str(e)}")
+                # If all else fails, set to empty list
+                cast_names = []
             
-            # Extract names from crew
+            # Extract names from crew with better error handling
             crew_names = []
-            for person in crew_data:
-                if isinstance(person, dict) and 'name' in person:
-                    crew_names.append(person['name'])
-                elif isinstance(person, str):
-                    crew_names.append(person)
+            try:
+                if isinstance(crew_data, list):
+                    for person in crew_data:
+                        if isinstance(person, dict) and 'name' in person:
+                            crew_names.append(person['name'])
+                        elif isinstance(person, str):
+                            crew_names.append(person)
+                elif isinstance(crew_data, dict) and 'name' in crew_data:
+                    # Handle case where crew_data is a single object instead of a list
+                    crew_names.append(crew_data['name'])
+                elif isinstance(crew_data, str):
+                    # Handle case where crew_data is a string
+                    crew_names.append(crew_data)
+            except Exception as e:
+                logger.error(f"Error extracting crew names: {str(e)}")
+                # If all else fails, set to empty list
+                crew_names = []
             
             # Extract names from genres
             genre_names = []
@@ -218,13 +361,30 @@ class Movie(db.Model):
                 elif isinstance(company, str):
                     company_names.append(company)
             
-            # Get director from crew
-            director =  []
-            for person in crew_data:
-                if isinstance(person, dict) and 'name' in person:
-                    director.append(person['name'])
-                elif isinstance(person, str):
-                    director.append(person)
+            # Get director from crew with better error handling
+            director = []
+            try:
+                if isinstance(crew_data, list):
+                    for person in crew_data:
+                        if isinstance(person, dict):
+                            # Check for director role
+                            if ('job' in person and person['job'] == 'Director' and 'name' in person):
+                                director.append(person['name'])
+                            # Some APIs use 'department' instead of 'job'
+                            elif ('department' in person and person['department'] == 'Directing' and 'name' in person):
+                                director.append(person['name'])
+                            # If no specific director info, just add all crew names
+                            elif 'name' in person and not director:
+                                director.append(person['name'])
+                        elif isinstance(person, str) and not director:
+                            director.append(person)
+                elif isinstance(crew_data, dict) and 'name' in crew_data:
+                    # Handle case where crew_data is a single object
+                    director.append(crew_data['name'])
+            except Exception as e:
+                logger.error(f"Error extracting director: {str(e)}")
+                # If all else fails, set to empty list
+                director = []
             
             # Log the extracted data for debugging
             logger.debug(f"Extracted {len(cast_names)} cast members")
